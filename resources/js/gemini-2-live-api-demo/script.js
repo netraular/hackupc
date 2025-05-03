@@ -1,12 +1,12 @@
-import { GeminiAgent } from './main/agent.js';
-import { getConfig, getWebsocketUrl, getDeepgramApiKey, MODEL_SAMPLE_RATE } from './config/config.js';
+import { GeminiAgent } from '/public/js/main/agent.js';
+import { getConfig, getWebsocketUrl, getDeepgramApiKey, MODEL_SAMPLE_RATE } from '/public/js/config/config.js';
 
 import { GoogleSearchTool } from './tools/google-search.js';
-import { SayHiTool } from './tools/say-hi.js';
+import { CarTrunkTool } from './tools/car-trunk.js';
 import { ToolManager } from './tools/tool-manager.js';
-import { ChatManager } from './chat/chat-manager.js';
+import { ChatManager } from '/public/js/chat/chat-manager.js';
 
-import { setupEventListeners } from './dom/events.js';
+import { setupEventListeners } from '/public/js/dom/events.js';
 
 const url = getWebsocketUrl();
 const config = getConfig();
@@ -14,7 +14,7 @@ const deepgramApiKey = getDeepgramApiKey();
 
 const toolManager = new ToolManager();
 toolManager.registerTool('googleSearch', new GoogleSearchTool());
-toolManager.registerTool('sayhi', new SayHiTool());
+toolManager.registerTool('openCarTrunk', new CarTrunkTool());
 
 
 const chatManager = new ChatManager();

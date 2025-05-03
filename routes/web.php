@@ -2,16 +2,34 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\ChatController; // Asegúrate de importar tu controlador
+use App\Http\Controllers\ChatController; // Chat de texto
+use App\Http\Controllers\SttController;  // Nuevo para STT
+use App\Http\Controllers\TtsController;  // Nuevo para TTS
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// --- Rutas para el Chat con n8n ---
-Route::get('/chat', [ChatController::class, 'index'])->name('chat.index'); // Muestra la vista del chat
-Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send'); // Recibe el mensaje del usuario y llama al webhook
+// --- Rutas para el Chat (Solo Texto) ---
+Route::get('/chat', [ChatController::class, 'index'])->name('chat.index'); // Muestra la vista del chat de texto
+Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send'); // Recibe texto y llama a n8n
 // --- Fin Rutas Chat ---
+
+// --- Rutas para Prueba STT ---
+Route::get('/stt-test', [SttController::class, 'showTestView'])->name('stt.test'); // Muestra la vista de prueba STT
+Route::post('/stt-transcribe', [SttController::class, 'transcribeAudio'])->name('stt.transcribe'); // Procesa el audio STT
+// --- Fin Rutas STT ---
+
+// --- Rutas para Prueba TTS ---
+Route::get('/tts-test', [TtsController::class, 'showTestView'])->name('tts.test'); // Muestra la vista de prueba TTS
+Route::post('/tts-synthesize', [TtsController::class, 'synthesizeText'])->name('tts.synthesize'); // Genera el audio TTS
+// --- Fin Rutas TTS ---
+
+
+// --- Ruta para version web ---
+Route::get('/web', function () {
+    return view('ar_experience/web');
+})->name('web');
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
@@ -30,5 +48,5 @@ Route::get('/webdemo', function () {
     return view('ar_experience/webdemo');
 })->name('webdemo');
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

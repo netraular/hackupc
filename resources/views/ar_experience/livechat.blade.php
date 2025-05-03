@@ -29,8 +29,7 @@
             <button id="sendBtn" class="send-btn">➤</button>
         </div>
     </div>
-    @vite('resources/js/gemini-2-live-api-demo/script.js')
 
-    <!-- <script type="module" src="js/script.js"></script> -->
+    <script type="module" src="js/script.js"></script>
 </body>
 </html>
