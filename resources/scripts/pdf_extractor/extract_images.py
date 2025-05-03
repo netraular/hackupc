@@ -2,7 +2,7 @@ import fitz  # PyMuPDF
 import os
 import json
 
-pdf_path = "/var/www/html/hackupc/resources/files/pdf/manual.pdf"
+pdf_path = "/var/www/html/hackupc/resources/files/maual.pdf"
 output_folder = "/var/www/html/hackupc/resources/files/extracted_images"
 json_output_path = "extracted_data.json"
 
