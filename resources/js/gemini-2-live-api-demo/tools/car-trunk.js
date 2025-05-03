@@ -19,7 +19,7 @@ export class CarTrunkTool {
      */
     execute(args) {
         // Dispatch the custom event to open the car trunk
-        const event = new CustomEvent('open-car-trunk');
+        const event = new CustomEvent('open-trunk');
         document.dispatchEvent(event);
         
         console.log('Car trunk event dispatched by Gemini');
