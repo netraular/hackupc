@@ -71,6 +71,7 @@
              max-width: 80%; /* Evitar que sea demasiado ancho */
          }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
     @vite('resources/js/ar/ar_experience.js')
 </head>
@@ -79,7 +80,31 @@
     <div id="ar-button-container"></div>
 
     <!-- Mensaje de instrucciones -->
-    <div id="info">Busca una superficie horizontal y toca la pantalla para colocar el cubo.</div>
+    <div class="app-container">
+        <button id="disconnectBtn" class="disconnect-btn">Disconnect</button>
+        <button id="connectBtn" class="connect-btn" style="display: none;">Connect</button>
+        <button id="settingsBtn" class="settings-btn">⚙️</button>
+        <button id="cameraBtn" class="camera-btn">
+            <span class="camera-icon">📷</span>
+        </button>
+        <button id="screenBtn" class="screen-btn">
+            <span class="screen-icon">🖥️</span>
+        </button>
+        <button id="micBtn" class="mic-btn">
+            <span class="mic-icon">🎤</span>
+        </button>
+        <div id="chatHistory" class="chat-history"></div>
+        <canvas id="visualizer" class="visualizer"></canvas>
+        <div id="cameraPreview" class="camera-preview"></div>
+        <div id="screenPreview" class="screen-preview"></div>
+        <div class="text-input-container">
+            <input type="text" id="messageInput" placeholder="Type your message..." class="text-input">
+            <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+    </div>
+    
+    @vite('resources/js/gemini-2-live-api-demo/script.js')
+    <!-- <script type="module" src="js/script.js"></script> -->
 
 </body>
 </html>

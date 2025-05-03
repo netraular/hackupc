@@ -41,7 +41,7 @@ class ARButton {
                     event.preventDefault();
                     event.stopPropagation();
                     console.log('Animation button touched');
-                    const evt = new CustomEvent('animation1-clicked');
+                    const evt = new CustomEvent('open-car-trunk');
                     document.dispatchEvent(evt);
                 }, true); // Use capture phase
                 
@@ -264,7 +264,7 @@ function init() {
     });
 
     // Set up a listener for our custom animation event
-    document.addEventListener('animation1-clicked', function() {
+    document.addEventListener('open-car-trunk', function() {
         if (mixer && action) {
             // Set button color to blue
             button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul

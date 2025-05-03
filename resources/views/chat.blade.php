@@ -3,37 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}"> {{-- Importante para la seguridad con AJAX en Laravel --}}
-    <title>Chat con Agente IA</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Chat con Agente IA (Texto)</title>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #chatbox { flex-grow: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid #ccc; background-color: #f9f9f9; }
-        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 70%; line-height: 1.4; }
-        .user-message { background-color: #dcf8c6; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 5px;}
-        .ai-message { background-color: #fff; align-self: flex-start; border: 1px solid #eee; border-bottom-left-radius: 5px; }
-        .message-container { display: flex; flex-direction: column; }
-        #chat-form { display: flex; padding: 15px; border-top: 1px solid #ccc; background-color: #eee; }
-        #message-input { flex-grow: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 20px; margin-right: 10px; font-size: 1em;}
-        #send-button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 1em; }
-        #send-button:disabled { background-color: #aaa; cursor: not-allowed; }
+        /* Estilos existentes... (sin cambios necesarios aquí a menos que quieras quitar espacio del micro) */
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f0f0f0; }
+        #chatbox { flex-grow: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid #ccc; background-color: #e5ddd5; display: flex; flex-direction: column;}
+        .message-container { display: flex; margin-bottom: 10px; max-width: 80%; }
+        .message { padding: 8px 12px; border-radius: 7.5px; line-height: 1.4; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); word-wrap: break-word; }
+        .user-message-container { align-self: flex-end; margin-left: auto; }
+        .ai-message-container { align-self: flex-start; margin-right: auto; }
+        .user-message { background-color: #dcf8c6; }
+        .ai-message { background-color: #fff; }
+        #chat-form { display: flex; padding: 10px; border-top: 1px solid #ccc; background-color: #f0f0f0; align-items: center; }
+        #message-input { flex-grow: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 20px; margin-right: 10px; font-size: 1em; background-color: #fff; }
+        #controls-container { display: flex; align-items: center; }
+        .chat-button { background: none; border: none; padding: 8px; cursor: pointer; font-size: 1.5em; color: #54656f; transition: color 0.2s; }
+        .chat-button:hover { color: #007bff; }
+        .chat-button:disabled { color: #aaa; cursor: not-allowed; }
         .typing-indicator { font-style: italic; color: #888; margin-left: 10px; }
+        /* Ya no se necesita el estilo .play-tts-button */
+
     </style>
+     <!-- Font Awesome para el icono de enviar -->
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
     <div id="chatbox">
-        {{-- Los mensajes del chat se añadirán aquí dinámicamente --}}
-        <div class="message-container">
+        <div class="ai-message-container message-container">
             <div class="message ai-message">
-                Hola! Soy tu asistente IA. ¿En qué puedo ayudarte hoy?
+                Hello! I'm your AI assistant. How can I help you today? (Text only)
             </div>
         </div>
     </div>
 
     <form id="chat-form">
-        {{-- @csrf No es necesario aquí porque lo enviamos en las cabeceras de fetch --}}
-        <input type="text" id="message-input" placeholder="Escribe tu mensaje..." autocomplete="off">
-        <button type="submit" id="send-button">Enviar</button>
+        <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off">
+        <div id="controls-container">
+             <!-- Botón de micrófono eliminado -->
+             <button type="submit" id="send-button" class="chat-button" title="Send Message">
+                 <i class="fas fa-paper-plane"></i>
+             </button>
+        </div>
     </form>
 
     <script>
@@ -41,111 +53,135 @@
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); // Obtener token CSRF
+        // const recordButton = document.getElementById('record-button'); // Eliminado
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Función para añadir mensajes al chatbox
+        // Variables y lógica de MediaRecorder eliminadas
+        // let mediaRecorder;
+        // let audioChunks = [];
+        // let isRecording = false;
+        // let currentPlayingAudio = null; // Eliminado
+
+        // Iconos SVG y clases de micrófono/grabación eliminados
+
+        // Función para añadir mensajes (simplificada, sin audioBase64)
         function addMessage(text, sender = 'user') {
             const messageContainer = document.createElement('div');
-            messageContainer.classList.add('message-container');
+            messageContainer.classList.add('message-container', sender === 'user' ? 'user-message-container' : 'ai-message-container');
 
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-            messageDiv.textContent = text; // Usar textContent para seguridad básica
+            messageDiv.textContent = text; // Usa textContent para seguridad
+
+            // Lógica del botón Play TTS eliminada
 
             messageContainer.appendChild(messageDiv);
             chatbox.appendChild(messageContainer);
-            chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll hacia abajo
+            scrollToBottom(); // Auto-scroll hacia abajo
         }
 
-        // Función para mostrar/ocultar indicador de "escribiendo"
+        function scrollToBottom() {
+             chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
         function showTypingIndicator(show = true) {
-             let indicator = chatbox.querySelector('.typing-indicator');
+             let indicator = chatbox.querySelector('.typing-indicator-container');
              if (show) {
                  if (!indicator) {
                      indicator = document.createElement('div');
-                     indicator.classList.add('message-container'); // Usar el mismo contenedor
+                     indicator.classList.add('message-container', 'ai-message-container', 'typing-indicator-container');
                      const indicatorBubble = document.createElement('div');
                      indicatorBubble.classList.add('message', 'ai-message', 'typing-indicator');
-                     indicatorBubble.textContent = 'Escribiendo...';
+                     indicatorBubble.textContent = 'Agent is typing...';
                      indicator.appendChild(indicatorBubble);
                      chatbox.appendChild(indicator);
-                     chatbox.scrollTop = chatbox.scrollHeight;
+                     scrollToBottom();
                  }
              } else {
                  if (indicator) {
                      indicator.remove();
                  }
              }
+        }
+
+         // Habilitar/deshabilitar controles (simplificado)
+         function setControlsEnabled(enabled) {
+             messageInput.disabled = !enabled;
+             sendButton.disabled = !enabled;
+             // recordButton.disabled = !enabled; // Eliminado
+             messageInput.style.opacity = enabled ? 1 : 0.6;
+             sendButton.style.opacity = enabled ? 1 : 0.6;
+             // recordButton.style.opacity = enabled ? 1 : 0.6; // Eliminado
          }
 
-        // Manejar el envío del formulario
+        // Funciones startRecording, stopRecording, setRecordingUI eliminadas
+        // Event listener de recordButton eliminado
+
+        // --- Manejo de Envío (Solo Texto) ---
         chatForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevenir recarga de la página
-
+            event.preventDefault();
             const messageText = messageInput.value.trim();
-            if (!messageText) return; // No enviar mensajes vacíos
+            if (!messageText) return;
 
-            // Deshabilitar input y botón mientras se procesa
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-
-            // 1. Mostrar mensaje del usuario inmediatamente
+            setControlsEnabled(false);
             addMessage(messageText, 'user');
-            messageInput.value = ''; // Limpiar input
-
-            // 2. Mostrar indicador de "escribiendo..."
+            messageInput.value = '';
             showTypingIndicator(true);
 
+             // Enviar texto como JSON
+            const dataToSend = JSON.stringify({ message: messageText });
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            };
 
-            try {
-                // 3. Enviar mensaje al backend (Laravel) usando fetch
-                const response = await fetch('{{ route("chat.send") }}', { // Usa la ruta nombrada de Laravel
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken // Enviar token CSRF
-                    },
-                    body: JSON.stringify({ message: messageText }) // Enviar como JSON
-                });
-
-                 // 4. Ocultar indicador de "escribiendo..."
-                showTypingIndicator(false);
-
-                // 5. Procesar la respuesta del backend
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.reply) {
-                        addMessage(data.reply, 'ai'); // Mostrar respuesta del AI
-                    } else if (data.error) {
-                         addMessage(`Error del servidor: ${data.error}`, 'ai'); // Mostrar error del servidor
-                    } else {
-                         addMessage('Error: Respuesta inesperada del servidor.', 'ai');
-                    }
-                } else {
-                    // Manejar errores HTTP (4xx, 5xx)
-                    const errorData = await response.json().catch(() => ({})); // Intenta parsear error JSON, si falla devuelve objeto vacío
-                    const errorMessage = errorData?.error || `Error ${response.status}: ${response.statusText}`;
-                    addMessage(`Error al contactar al agente: ${errorMessage}`, 'ai');
-                    console.error('Error response:', response);
-                }
-
-            } catch (error) {
-                // 6. Manejar errores de red u otros errores de fetch
-                 showTypingIndicator(false); // Asegurarse de ocultarlo si hay error
-                console.error('Error en fetch:', error);
-                addMessage('Error de conexión. Inténtalo de nuevo.', 'ai');
-            } finally {
-                // 7. Reactivar input y botón
-                messageInput.disabled = false;
-                sendButton.disabled = false;
-                messageInput.focus(); // Poner el foco de nuevo en el input
-            }
+            await sendData(dataToSend, headers);
         });
 
-        // Opcional: Enfocar el input al cargar la página
+        // Función genérica para enviar datos (ahora solo JSON)
+         async function sendData(jsonData, headers) {
+             try {
+                 const response = await fetch('{{ route("chat.send") }}', {
+                     method: 'POST',
+                     headers: headers,
+                     body: jsonData // Siempre enviamos JSON
+                 });
+
+                 showTypingIndicator(false);
+
+                 const responseData = await response.json(); // Siempre esperamos JSON
+
+                 if (response.ok) {
+                      if (responseData.reply) {
+                         // Añadir mensaje solo con texto
+                         addMessage(responseData.reply, 'ai');
+                     } else {
+                         // Si la respuesta fue 200 OK pero no tiene 'reply', es un error inesperado
+                          addMessage(`Server Error: Unexpected response format.`, 'ai');
+                          console.error('Unexpected success response:', responseData);
+                     }
+                 } else {
+                      // Construye el mensaje de error
+                     const errorMessage = responseData?.reply || responseData?.error || `Error ${response.status}`;
+                     addMessage(`${errorMessage}`, 'ai'); // Mostrar mensaje de error como mensaje AI
+                     console.error('Error response status:', response.status, 'Error data parsed:', responseData);
+                 }
+
+             } catch (error) {
+                 showTypingIndicator(false);
+                 console.error('Fetch Error:', error);
+                 addMessage('Connection error. Please try again.', 'ai');
+             } finally {
+                 setControlsEnabled(true);
+                 messageInput.focus();
+             }
+         }
+
+        // Enfocar input al cargar
         messageInput.focus();
+        scrollToBottom(); // Asegurar scroll inicial
 
     </script>
 

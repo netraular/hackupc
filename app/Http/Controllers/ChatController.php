@@ -3,93 +3,87 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http; // Importa el cliente HTTP de Laravel
-use Illuminate\Support\Facades\Log;  // Para registrar errores (opcional pero útil)
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+// Ya no se necesitan los 'use' de Google Cloud ni Storage aquí
 
 class ChatController extends Controller
 {
-    /**
-     * Muestra la vista del chat.
-     */
     public function index()
     {
-        return view('chat'); // Crearemos esta vista en el siguiente paso
+        // Devuelve la vista principal del chat (ahora solo texto)
+        // Asegúrate de que resources/views/chat.blade.php exista
+        return view('chat');
     }
 
-    /**
-     * Recibe el mensaje del usuario, lo envía al webhook de n8n y devuelve la respuesta.
-     */
     public function sendMessage(Request $request)
     {
-
-        // Validación simple
+        // Validación: Solo esperamos texto ahora
         $request->validate([
             'message' => 'required|string|max:2000',
         ]);
 
         $userMessage = $request->input('message');
-        // --- IMPORTANTE: Guarda esta URL en tu .env para mayor seguridad y flexibilidad ---
-        // $webhookUrl = env('N8N_WEBHOOK_URL', 'TU_URL_POR_DEFECTO_SI_NO_ESTA_EN_ENV');
-        $webhookUrl = 'https://n8n.raular.com/webhook/91ccfc7f-5bcf-467d-b64e-5a5d86733588'; // Usa la variable de entorno
+        $webhookUrl = config('services.n8n.webhook_url'); // Asegúrate que N8N_WEBHOOK_URL está en .env
+
         if (!$webhookUrl) {
             Log::error('La variable de entorno N8N_WEBHOOK_URL no está definida.');
-            // ESTA LÍNEA ES LA QUE GENERA TU ERROR
-            return response()->json(['error' => 'AAAAAAAAAConfiguración interna del servidor incompleta.'], 500);
+            return response()->json(['error' => 'Configuración interna del servidor incompleta.'], 500);
         }
 
+        Log::info('Enviando mensaje de texto a n8n: ' . $userMessage);
+
+        // --- Llamada al Webhook n8n (solo con texto) ---
         try {
-            // Realiza la petición POST al webhook de n8n
-            $response = Http::timeout(30) // Establece un timeout (ej. 30 segundos)
+            $n8nResponse = Http::timeout(60) // Timeout para la respuesta de n8n
                 ->post($webhookUrl, [
-                // --- Asegúrate que tu workflow n8n espera recibir 'message' en el body ---
-                // --- o ajusta esta clave según necesites ('text', 'input', etc.) ---
-                'message' => $userMessage,
-                // Puedes añadir aquí otros datos si tu workflow los necesita
-                // 'userId' => auth()->id(), // Ejemplo si el usuario está logueado
-            ]);
-
-            // Verifica si la petición fue exitosa (código 2xx)
-            if ($response->successful()) {
-
-                $responseData = $response->json();
-
-                // --- LOGS ADICIONALES ---
-                Log::debug('Respuesta JSON cruda de n8n:', ['raw_body' => $response->body()]); // Ver el JSON exacto
-                Log::debug('Respuesta parseada a array PHP:', ['parsed_data' => $responseData]); // Verificar el array
-                Log::debug('Intentando acceder a [data][output]:', [
-                    'has_data' => isset($responseData['data']),
-                    'has_output' => isset($responseData['data']['output']),
-                    'value' => $responseData['data']['output'] ?? 'NO ENCONTRADO o NULL'
+                    'message' => $userMessage, // Enviar solo el texto
                 ]);
-                // -----------------------
-        
-                $aiReply = $responseData['output'] ?? 'Error: No se pudo interpretar la respuesta del agente.';
-        
-                // --- LOG ADICIONAL ---
-                Log::debug('Valor final de $aiReply antes de enviar JSON:', ['aiReply_value' => $aiReply]);
-                // -----------------------
-                // Devuelve la respuesta del AI como JSON al frontend
-                return response()->json(['reply' => $aiReply]);
+
+            if ($n8nResponse->successful()) {
+                $responseData = $n8nResponse->json();
+                Log::debug('Respuesta cruda de n8n:', ['raw_body' => $n8nResponse->body()]);
+                Log::debug('Respuesta parseada de n8n:', ['parsed_data' => $responseData]);
+
+                // Esperamos una clave 'output' (o la que devuelva tu flujo n8n) con la respuesta de texto
+                $aiReplyText = $responseData['output'] ?? null;
+
+                if (!$aiReplyText) {
+                    Log::error('La respuesta de n8n no contiene la clave "output" esperada.', ['response_data' => $responseData]);
+                    // Devuelve un mensaje genérico
+                    return response()->json([
+                         'reply' => 'Sorry, I received an unexpected response from the agent.'
+                    ], 500); // Internal Server Error o Bad Gateway (502) si prefieres
+                }
+
+                Log::info('Respuesta de texto del AI (n8n): ' . $aiReplyText);
+
+                // --- Devolver solo la respuesta de texto al frontend ---
+                return response()->json([
+                    'reply' => $aiReplyText,
+                    // Ya no hay 'audioReply'
+                ]);
 
             } else {
-                // La petición falló (código 4xx o 5xx)
+                // Error en la llamada a n8n
                 Log::error('Error llamando al webhook de n8n:', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'status' => $n8nResponse->status(),
+                    'body' => $n8nResponse->body(),
                     'url' => $webhookUrl,
                     'message_sent' => $userMessage
                 ]);
-                // Devuelve un error genérico al frontend
-                return response()->json(['error' => 'El agente IA no pudo responder.'], $response->status());
+                // Intenta devolver el mensaje de error de n8n si es posible, o uno genérico
+                $errorBody = $n8nResponse->json() ?? ['message' => $n8nResponse->body()];
+                $errorMessage = $errorBody['message'] ?? 'The AI agent could not respond.';
+                return response()->json(['error' => $errorMessage, 'reply' => "Sorry, the AI agent encountered an error."], $n8nResponse->status());
             }
 
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('Error de conexión con el webhook de n8n: ' . $e->getMessage(), ['url' => $webhookUrl]);
-            return response()->json(['error' => 'No se pudo conectar con el agente IA.'], 504); // Gateway Timeout
+            return response()->json(['error' => 'Could not connect to the AI agent.', 'reply' => 'Sorry, I couldn\'t connect to the AI agent right now.'], 504); // Gateway Timeout
         } catch (\Exception $e) {
-            // Captura cualquier otro error inesperado
             Log::error('Error inesperado en ChatController::sendMessage: ' . $e->getMessage(), ['exception' => $e]);
-            return response()->json(['error' => 'Ocurrió un error inesperado.'], 500); // Internal Server Error
+            return response()->json(['error' => 'An unexpected error occurred.', 'reply' => 'Sorry, an unexpected error occurred.'], 500); // Internal Server Error
         }
     }
 }
