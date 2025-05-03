@@ -1,41 +1,30 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
+    <title>MODEL 3D</title>
     <meta charset="utf-8" />
-    <title>three.js webgl – animación y panel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="main.css" />
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-
-        canvas {
-            display: block;
-        }
-    </style>
+    <meta
+        name="viewport"
+        content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <link type="text/css" rel="stylesheet" href="3dmodel/css/main.css" />
 </head>
 
 <body>
-    <!-- Botones HTML básicos -->
-    <button class="animation" data-animation="0" disabled>Animación 1</button>
-    <button class="animation" data-animation="1" disabled>Animación 2</button>
-    <button class="animation" data-animation="2" disabled>Animación 3</button>
-    <button class="animation" data-animation="3" disabled>Animación 4</button>
-    <button class="animation" data-animation="4" disabled>Animación 5</button>
+    <button class="animation" data-animation="0" disabled>animation 1</button>
+    <button class="animation" data-animation="1" disabled>animation 2</button>
+    <button class="animation" data-animation="2" disabled>animation 3</button>
+    <button class="animation" data-animation="3" disabled>animation 4</button>
+    <button class="animation" data-animation="4" disabled>animation 5</button>
 
     <div id="info">
         <button id="insideCameraBtn">Inside Camera View</button>
-        <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a>
-        webgl – cargar GLB + panel
     </div>
 
     <script type="importmap">
         {
         "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.j,
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
           "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
         }
       }
@@ -47,21 +36,23 @@
             OrbitControls
         } from "three/addons/controls/OrbitControls.js";
         import {
-            GLTFLoader
-        } from "three/addons/loaders/GLTFLoader.js";
-        import {
             DRACOExporter
         } from "three/addons/exporters/DRACOExporter.js";
         import {
             GUI
         } from "three/addons/libs/lil-gui.module.min.js";
+        import {
+            GLTFLoader
+        } from "three/addons/loaders/GLTFLoader.js";
 
-        let scene, camera, renderer, controls, mixer, gltfData;
-        let panelGroup = null;
-        const clock = new THREE.Clock();
-        const buttons3D = [];
+        let scene, camera, renderer, exporter, mesh;
+        let mixer = "";
+        let controls;
+        let action = null;
+        let clip = null;
+        let panelGroup = null; // aquí guardaremos el panel para quitarlo si queremos
 
-        // Textos random para el panel
+        // Textos random
         const textos = [
             "¡Hola Mundo!",
             "Tu carrito te saluda",
@@ -70,113 +61,192 @@
             "Este es tu carrito",
         ];
 
+        //para las animaciones
+        let gltf = null;
+
+        // 1) Defino la función globalmente
+        function doAnimation(indexAnimation, animation, mixer) {
+            if (!mixer) {
+                console.warn("El modelo o el mixer aún no están listos");
+                return;
+            }
+            const action = mixer.clipAction(animation);
+            action.reset();
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            action.zeroSlopeAtEnd = true;
+            action.timeScale = 5;
+            action.play();
+        }
+
+        const params = {
+            export: exportFile,
+        };
+
         init();
-        animate();
 
         function init() {
-            // Cámara y escena
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xa0a0a0);
             camera = new THREE.PerspectiveCamera(
                 45,
                 window.innerWidth / window.innerHeight,
                 0.1,
                 100
             );
-            camera.position.set(4, 2, 4);
+            camera.position.set(4, 2, 4); // Initial camera position
 
-            // Iluminación
-            const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
-            hemi.position.set(0, 20, 0);
-            scene.add(hemi);
-            const dir = new THREE.DirectionalLight(0xffffff, 2);
-            dir.position.set(0, 20, 10);
-            dir.castShadow = true;
-            scene.add(dir);
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xa0a0a0);
+            scene.fog = new THREE.Fog(0xa0a0a0, 4, 20);
 
-            // Suelo
-            const floor = new THREE.Mesh(
+            exporter = new DRACOExporter();
+
+            // Lights
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 3);
+            hemiLight.position.set(0, 20, 0);
+            scene.add(hemiLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+            directionalLight.position.set(0, 20, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.top = 2;
+            directionalLight.shadow.camera.bottom = -2;
+            directionalLight.shadow.camera.left = -2;
+            directionalLight.shadow.camera.right = 2;
+            scene.add(directionalLight);
+
+            // Ground
+            const ground = new THREE.Mesh(
                 new THREE.PlaneGeometry(40, 40),
                 new THREE.MeshPhongMaterial({
-                    color: 0x999999,
+                    color: 0xbbbbbb,
                     depthWrite: false
                 })
             );
-            floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
-            scene.add(floor);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const grid = new THREE.GridHelper(40, 20, 0x000000, 0x000000);
+            grid.material.opacity = 0.2;
+            grid.material.transparent = true;
+            scene.add(grid);
+
+            // 1) Función para crear un botón 3D con texto dinámico
+            function createButton(label, animationIndex, positionVector3) {
+                const W = 256,
+                    H = 128;
+                const canvas = document.createElement("canvas");
+                canvas.width = W;
+                canvas.height = H;
+                const ctx = canvas.getContext("2d");
+                // fondo
+                ctx.fillStyle = "#222";
+                ctx.fillRect(0, 0, W, H);
+                // texto
+                ctx.font = "36px sans-serif";
+                ctx.fillStyle = "#fff";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(label, W / 2, H / 2);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    transparent: true,
+                });
+                const geo = new THREE.PlaneGeometry(1, 0.5);
+                const btn = new THREE.Mesh(geo, mat);
+
+                btn.position.copy(positionVector3);
+                btn.userData.animationIndex = animationIndex; // índice a lanzar
+                scene.add(btn);
+                buttons.push(btn);
+
+                return btn;
+            }
+
+            // Load GLB model
+            const loader = new GLTFLoader();
+            loader.load(
+                "3dmodel/oficial.glb", // Replace with your GLB model path
+                function(gltf) {
+                    gltf = gltf;
+                    mesh = gltf.scene;
+                    mesh.traverse(function(child) {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    mesh.position.y = 0;
+                    scene.add(mesh);
+
+                    mixer = new THREE.AnimationMixer(mesh);
+
+                    //add the listeners to the buttons
+                    document.querySelectorAll(".animation").forEach((btn) => {
+                        btn.disabled = false;
+                        // Añadimos el listener que lee el índice del data-index
+                        btn.addEventListener("click", () => {
+                            const idx = parseInt(btn.dataset.animation, 10);
+                            //index animation, animation, mixer
+                            showPanelRandom();
+
+                            doAnimation(idx, gltf.animations[idx], mixer);
+                        });
+                    });
+                },
+                undefined,
+                function(error) {
+                    console.error("Error al cargar car.glb:", error);
+                }
+            );
 
             // Renderer
             renderer = new THREE.WebGLRenderer({
                 antialias: true
             });
+            renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setAnimationLoop(animate);
             renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
-            // Controles Orbit
+            // Controls
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.target.set(0, 1, 0);
+            controls.target.set(0, 1.5, 0);
             controls.update();
 
-            window.addEventListener("resize", onResize);
-            renderer.domElement.addEventListener("pointerdown", onPointerDown);
+            // Resize
+            window.addEventListener("resize", onWindowResize);
 
-            // Carga GLB
-            const loader = new GLTFLoader();
-            loader.load(
-                "3dmodel/oficial.glb",
-                (g) => {
-                    gltfData = g;
-                    const mesh = g.scene;
-                    mesh.traverse(
-                        (c) => c.isMesh && (c.castShadow = c.receiveShadow = true)
-                    );
-                    scene.add(mesh);
-                    mixer = new THREE.AnimationMixer(mesh);
+            // Inside Camera Button event
+            document
+                .getElementById("insideCameraBtn")
+                .addEventListener("click", () => {
+                    if (!mesh) {
+                        alert("Modelo aún no cargado");
+                        return;
+                    }
 
-                    // habilitar botones HTML y asignar listeners
-                    document.querySelectorAll(".animation").forEach((btn) => {
-                        btn.disabled = false;
-                        btn.addEventListener("click", () => {
-                            const idx = parseInt(btn.dataset.animation, 10);
-                            const clip = gltfData.animations[idx];
+                    // Set a fixed position for the camera, inside the car
+                    const fixedPosition = new THREE.Vector3(1.5, 0.9, 0.4); // Adjust the position to inside the car (90 degrees to the right)
 
-                            showPanelRandom();
-                            playAnimation(clip);
-                        });
-                    });
-                },
-                undefined,
-                (err) => console.error(err)
-            );
+                    // Set the camera position to this fixed position
+                    camera.position.copy(fixedPosition);
 
-            // GUI export DRC
-            const exporter = new DRACOExporter();
+                    // Ensure the camera is facing the model (you can adjust the rotation as necessary)
+                    camera.lookAt(new THREE.Vector3(0, 0, 0)); // Adjust based on your model's front
+
+                    // Update controls to target the center of the model (or another point you prefer)
+                    controls.target.set(0, 0.7, 0.35); // Adjust this to the center of your model
+                    controls.update();
+                });
+
+            // GUI
             const gui = new GUI();
-            gui
-                .add({
-                        export: () => {
-                            if (!gltfData) return alert("Modelo no cargado");
-                            const drc = exporter.parse(gltfData.scene);
-                            saveArrayBuffer(drc, "car.drc");
-                        },
-                    },
-                    "export"
-                )
-                .name("Exportar DRC");
-        }
-
-        function onPointerDown(event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-            raycaster.setFromCamera(pointer, camera);
-            const hit = raycaster.intersectObjects(buttons3D, false);
-            if (hit.length) {
-                const idx = hit[0].object.userData.animationIndex;
-                playAnimation(idx);
-            }
+            gui.add(params, "export").name("Exportar DRC");
+            gui.open();
         }
 
         // Muestra un panel 3D con texto e imagen
@@ -228,39 +298,40 @@
             scene.add(panelGroup);
         }
 
-        function playAnimation(clip) {
-            const action = mixer.clipAction(clip);
-            action.reset();
-            action.setLoop(THREE.LoopOnce, 1);
-            action.clampWhenFinished = true;
-            action.zeroSlopeAtEnd = true;
-            action.timeScale = 3;
-            action.play();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-            if (mixer) mixer.update(delta);
-            // orientar panel y botones 3D (si los tuvieras)
-            if (panelGroup) panelGroup.lookAt(camera.position);
-            renderer.render(scene, camera);
-        }
-
-        function onResize() {
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // Helpers para descarga
+        function animate() {
+            if (mixer) {
+                mixer.update(0.01);
+            }
+
+            renderer.render(scene, camera);
+            //   console.log('Camera Position and Center of Rotation:', {
+            //   cameraPosition: camera.position,
+            //   centerOfRotation: controls.target
+            // });
+        }
+
+        function exportFile() {
+            if (!mesh) {
+                alert("Modelo aún no cargado");
+                return;
+            }
+            const result = exporter.parse(mesh);
+            saveArrayBuffer(result, "car.drc");
+        }
+
         const link = document.createElement("a");
         link.style.display = "none";
         document.body.appendChild(link);
 
-        function save(blob, name) {
+        function save(blob, filename) {
             link.href = URL.createObjectURL(blob);
-            link.download = name;
+            link.download = filename;
             link.click();
         }
 
