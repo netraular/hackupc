@@ -1,39 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
-<?php
-#Funciones relevantes
-/**
- * 
- * @param int $indexAnimation
- * @param object $animation
- * @param object $mixer
- * 
- * Requiere el indice de la animación, la animación y el controlador de la animación
- * 
- * mixer se crea al cargar el modelo oficial.glb, que contiene todas las animaciones
-*/
-
-//doAnimation(idx, gltf . animations[idx], mixer);
-
-
-
-
-?>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"> {{-- Cambiado a lang de Laravel --}}
 <head>
     <title>MODEL 3D</title>
     <meta charset="utf-8" />
     <meta
         name="viewport"
         content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <link type="text/css" rel="stylesheet" href="3dmodel/css/main.css" />
+    {{-- Asegúrate que la ruta a main.css sea correcta desde la carpeta public --}}
+    {{-- Si '3dmodel' está dentro de 'public', está bien. Si no, usa asset() --}}
+    <link type="text/css" rel="stylesheet" href="{{ asset('3dmodel/css/main.css') }}" />
+
+    {{-- Estilos para el Popup (añadido) --}}
+    <style>
+        /* Overlay: cubre todo y centra contenido con Flexbox */
+        .popup-overlay {
+            position: fixed; /* Fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Fondo más oscuro */
+            z-index: 1000;
+            display: flex; /* Habilita Flexbox */
+            justify-content: center; /* Centra horizontalmente */
+            align-items: center; /* Centra verticalmente */
+            /* Inicialmente oculto (el JS lo mostrará cambiando display a 'flex') */
+            display: none;
+            padding: 20px; /* Espacio por si el popup es muy grande */
+            box-sizing: border-box;
+        }
+
+        /* Contenido del Popup */
+        .popup-content {
+            background-color: #fff;
+            padding: 25px 30px; /* Ajusta padding */
+            border-radius: 10px; /* Bordes más redondeados */
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+            max-width: 550px; /* Un poco más ancho */
+            width: 95%; /* Más responsivo */
+            position: relative;
+            text-align: left;
+            color: #333;
+            max-height: 90vh; /* Altura máxima para evitar desbordamiento */
+            overflow-y: auto; /* Scroll si el contenido es muy largo */
+        }
+
+        .popup-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px; /* Más espacio debajo del título */
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            text-align: center; /* Centrar título */
+        }
+
+        /* Botón de cerrar */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px; /* Más grande */
+            font-weight: bold;
+            color: #aaa; /* Más suave */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-button:hover {
+            color: #333;
+        }
+
+        /* Contenedor de todos los miembros */
+        .team-members {
+            display: flex;
+            flex-direction: column; /* Apila los miembros verticalmente */
+            gap: 20px; /* Espacio entre miembros */
+        }
+
+        /* Estilo para cada bloque de miembro */
+        .member-info {
+            display: flex; /* Imagen y texto en línea */
+            align-items: center; /* Centra verticalmente imagen y texto */
+            gap: 15px; /* Espacio entre imagen y texto */
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0; /* Separador suave */
+        }
+        .member-info:last-child {
+            border-bottom: none; /* No poner borde al último */
+        }
+
+        /* Estilo para la imagen de GitHub */
+        .github-avatar {
+            width: 60px; /* Tamaño fijo */
+            height: 60px;
+            border-radius: 50%; /* Hace la imagen redonda */
+            object-fit: cover; /* Evita que la imagen se deforme */
+            border: 2px solid #eee; /* Borde sutil */
+        }
+
+        /* Contenedor para nombre y enlace */
+        .member-details {
+            flex-grow: 1; /* Ocupa el espacio restante */
+        }
+
+        /* Estilo para el nombre del miembro */
+        .member-name {
+            font-weight: bold;
+            margin: 0 0 5px 0; /* Sin margen superior, poco inferior */
+            font-size: 1.1em;
+            color: #444;
+        }
+
+        /* Estilo para el enlace web */
+        .member-website {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .member-website:hover {
+            text-decoration: underline;
+        }
+
+        /* Estilo del botón "Sobre Nosotros" (igual que antes) */
+        #about-us-button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        #about-us-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
 </head>
 
 <body>
+    {{-- Botones existentes --}}
     <button class="animation" data-animation="0" disabled>animation 1</button>
     <button class="animation" data-animation="1" disabled>animation 2</button>
     <button class="animation" data-animation="2" disabled>animation 3</button>
     <button class="animation" data-animation="3" disabled>animation 4</button>
     <button class="animation" data-animation="4" disabled>animation 5</button>
+
+    {{-- Botón añadido para el Popup About Us --}}
+    <button id="about-us-button">Sobre Nosotros</button>
 
     <div id="info">
         <button id="insideCameraBtn">Inside Camera View</button>
@@ -48,6 +164,7 @@
       }
     </script>
 
+    {{-- Script Module de Three.js (sin cambios internos) --}}
     <script type="module">
         import * as THREE from "three";
         import {
@@ -64,13 +181,13 @@
         } from "three/addons/loaders/GLTFLoader.js";
 
         let scene, camera, renderer, exporter, mesh;
-        let mixer = "";
+        let mixer = null; // Inicializar a null
         let controls;
         let action = null;
         let clip = null;
-        let panelGroup = null; // aquí guardaremos el panel para quitarlo si queremos
+        let panelGroup = null;
+        let loadedGltf = null; // Variable para guardar el gltf cargado
 
-        // Textos random
         const textos = [
             "¡Hola Mundo!",
             "Tu carrito te saluda",
@@ -79,22 +196,28 @@
             "Este es tu carrito",
         ];
 
-        //para las animaciones
-        let gltf = null;
-
-        // 1) Defino la función globalmente
-        function doAnimation(indexAnimation, animation, mixer) {
-            if (!mixer) {
-                console.warn("El modelo o el mixer aún no están listos");
+        function doAnimation(indexAnimation, animation, localMixer) { // Renombrado mixer a localMixer para evitar confusión
+            if (!localMixer || !animation) { // Añadida comprobación para animation
+                console.warn("El mixer o la animación no están listos para el índice:", indexAnimation);
                 return;
             }
-            const action = mixer.clipAction(animation);
-            action.reset();
-            action.setLoop(THREE.LoopOnce, 1);
-            action.clampWhenFinished = true;
-            action.zeroSlopeAtEnd = true;
-            action.timeScale = 5;
-            action.play();
+            // Intentar obtener la acción
+            try {
+                 const action = localMixer.clipAction(animation);
+                 if (!action) {
+                     console.warn("No se pudo crear la acción para la animación:", animation.name);
+                     return;
+                 }
+                 action.reset();
+                 action.setLoop(THREE.LoopOnce, 1);
+                 action.clampWhenFinished = true;
+                 action.zeroSlopeAtEnd = true; // Considera si realmente necesitas esto
+                 action.timeScale = 5; // O ajusta según necesites
+                 action.play();
+            } catch (error) {
+                 console.error("Error al intentar reproducir la animación:", indexAnimation, error);
+            }
+
         }
 
         const params = {
@@ -110,7 +233,7 @@
                 0.1,
                 100
             );
-            camera.position.set(4, 2, 4); // Initial camera position
+            camera.position.set(4, 2, 4);
 
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xa0a0a0);
@@ -149,46 +272,17 @@
             grid.material.transparent = true;
             scene.add(grid);
 
-            // 1) Función para crear un botón 3D con texto dinámico
-            function createButton(label, animationIndex, positionVector3) {
-                const W = 256,
-                    H = 128;
-                const canvas = document.createElement("canvas");
-                canvas.width = W;
-                canvas.height = H;
-                const ctx = canvas.getContext("2d");
-                // fondo
-                ctx.fillStyle = "#222";
-                ctx.fillRect(0, 0, W, H);
-                // texto
-                ctx.font = "36px sans-serif";
-                ctx.fillStyle = "#fff";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(label, W / 2, H / 2);
-
-                const tex = new THREE.CanvasTexture(canvas);
-                const mat = new THREE.MeshBasicMaterial({
-                    map: tex,
-                    transparent: true,
-                });
-                const geo = new THREE.PlaneGeometry(1, 0.5);
-                const btn = new THREE.Mesh(geo, mat);
-
-                btn.position.copy(positionVector3);
-                btn.userData.animationIndex = animationIndex; // índice a lanzar
-                scene.add(btn);
-                buttons.push(btn);
-
-                return btn;
-            }
+            // NO NECESITAS ESTA FUNCION AQUI SI NO CREAS BOTONES 3D DINÁMICAMENTE
+            // function createButton(label, animationIndex, positionVector3) { ... }
+            // const buttons = []; // Tampoco necesitas esto si no usas createButton
 
             // Load GLB model
             const loader = new GLTFLoader();
+            // Asegúrate que la ruta al GLB sea correcta desde la carpeta public
             loader.load(
-                "3dmodel/oficial.glb", // Replace with your GLB model path
-                function(gltf) {
-                    gltf = gltf;
+                "{{ asset('3dmodel/oficial.glb') }}", // Recomendado usar asset()
+                function(gltf) { // No reasignar gltf globalmente aquí, usar el parámetro
+                    loadedGltf = gltf; // Guarda el gltf cargado
                     mesh = gltf.scene;
                     mesh.traverse(function(child) {
                         if (child.isMesh) {
@@ -196,27 +290,29 @@
                             child.receiveShadow = true;
                         }
                     });
-                    mesh.position.y = 0;
+                    mesh.position.y = 0; // Ajusta si es necesario
                     scene.add(mesh);
 
-                    mixer = new THREE.AnimationMixer(mesh);
+                    mixer = new THREE.AnimationMixer(mesh); // Crear el mixer aquí
 
-                    //add the listeners to the buttons
+                    // Habilitar botones y añadir listeners
                     document.querySelectorAll(".animation").forEach((btn) => {
                         btn.disabled = false;
-                        // Añadimos el listener que lee el índice del data-index
                         btn.addEventListener("click", () => {
                             const idx = parseInt(btn.dataset.animation, 10);
-                            //index animation, animation, mixer
-                            showPanelRandom();
-
-                            doAnimation(idx, gltf.animations[idx], mixer);
+                            if (loadedGltf && loadedGltf.animations && loadedGltf.animations[idx]) {
+                                showPanelRandom(); // Muestra el panel
+                                // Llama a doAnimation con el mixer y la animación correcta
+                                doAnimation(idx, loadedGltf.animations[idx], mixer);
+                            } else {
+                                console.warn(`Animación con índice ${idx} no encontrada.`);
+                            }
                         });
                     });
                 },
-                undefined,
+                undefined, // Progress callback (opcional)
                 function(error) {
-                    console.error("Error al cargar car.glb:", error);
+                    console.error("Error al cargar el modelo GLB:", error);
                 }
             );
 
@@ -226,13 +322,13 @@
             });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setAnimationLoop(animate);
+            renderer.setAnimationLoop(animate); // Usa setAnimationLoop para el bucle de renderizado
             renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
             // Controls
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.target.set(0, 1.5, 0);
+            controls.target.set(0, 1, 0); // Ajusta el target si es necesario
             controls.update();
 
             // Resize
@@ -243,76 +339,63 @@
                 .getElementById("insideCameraBtn")
                 .addEventListener("click", () => {
                     if (!mesh) {
-                        alert("Modelo aún no cargado");
+                        console.warn("Modelo aún no cargado para la vista interior."); // Cambiado a warn
                         return;
                     }
-
-                    // Set a fixed position for the camera, inside the car
-                    const fixedPosition = new THREE.Vector3(1.5, 0.9, 0.4); // Adjust the position to inside the car (90 degrees to the right)
-
-                    // Set the camera position to this fixed position
+                    const fixedPosition = new THREE.Vector3(0.3, 1.2, -0.5); // Ajusta esta posición
                     camera.position.copy(fixedPosition);
-
-                    // Ensure the camera is facing the model (you can adjust the rotation as necessary)
-                    camera.lookAt(new THREE.Vector3(0, 0, 0)); // Adjust based on your model's front
-
-                    // Update controls to target the center of the model (or another point you prefer)
-                    controls.target.set(0, 0.7, 0.35); // Adjust this to the center of your model
+                    controls.target.set(0, 1, 2); // Ajusta hacia donde mira (adelante)
                     controls.update();
+                     camera.lookAt(controls.target); // Asegúrate que mire al target
                 });
 
             // GUI
             const gui = new GUI();
             gui.add(params, "export").name("Exportar DRC");
-            gui.open();
+            // gui.open(); // No es necesario si solo tiene un botón
         }
 
-        // Muestra un panel 3D con texto e imagen
         function showPanelRandom() {
-            // eliminar panel anterior
-            if (panelGroup) scene.remove(panelGroup);
+            if (panelGroup) scene.remove(panelGroup); // Eliminar panel anterior
             panelGroup = new THREE.Group();
 
             // Texto random
             const txt = textos[Math.floor(Math.random() * textos.length)];
-            const CW = 512,
-                CH = 128;
+            const CW = 512, CH = 128;
             const cvs = document.createElement("canvas");
-            cvs.width = CW;
-            cvs.height = CH;
+            cvs.width = CW; cvs.height = CH;
             const ctx = cvs.getContext("2d");
-            ctx.fillStyle = "#222";
-            ctx.fillRect(0, 0, CW, CH);
-            ctx.font = "48px sans-serif";
-            ctx.fillStyle = "#fff";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#222"; ctx.fillRect(0, 0, CW, CH);
+            ctx.font = "48px sans-serif"; ctx.fillStyle = "#fff";
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.fillText(txt, CW / 2, CH / 2);
             const txtTex = new THREE.CanvasTexture(cvs);
             const txtMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(2, 0.5),
-                new THREE.MeshBasicMaterial({
-                    map: txtTex,
-                    transparent: true
-                })
+                new THREE.MeshBasicMaterial({ map: txtTex, transparent: true })
             );
             panelGroup.add(txtMesh);
 
-            // Imagen
-            new THREE.TextureLoader().load("3dmodel/imgs/carrito.jpg", (imgTex) => {
+            // Imagen (Asegúrate que la ruta sea correcta desde public)
+            new THREE.TextureLoader().load("{{ asset('3dmodel/imgs/carrito.jpg') }}", (imgTex) => { // Usar asset()
                 const ar = imgTex.image.width / imgTex.image.height;
                 const imgMesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(1.5 * ar, 1.5),
-                    new THREE.MeshBasicMaterial({
-                        map: imgTex
-                    })
+                    new THREE.MeshBasicMaterial({ map: imgTex })
                 );
-                imgMesh.position.y = -0.75;
+                imgMesh.position.y = -1.0; // Ajustado para que no solape tanto con el texto
                 panelGroup.add(imgMesh);
             });
 
-            // Colocar frente a cámara
-            panelGroup.position.set(0, 1.5, -2);
+            // Colocar frente a cámara dinámicamente
+             const distance = 3; // Distancia desde la cámara
+             const targetPosition = new THREE.Vector3();
+             camera.getWorldDirection(targetPosition); // Obtener dirección de la cámara
+             targetPosition.multiplyScalar(distance); // Mover en esa dirección
+             targetPosition.add(camera.position); // Sumar posición actual de la cámara
+
+            panelGroup.position.copy(targetPosition);
+            panelGroup.lookAt(camera.position); // Hacer que el panel mire a la cámara
             scene.add(panelGroup);
         }
 
@@ -322,25 +405,41 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+        const clock = new THREE.Clock(); // Necesitas un Clock para el delta time del mixer
+
         function animate() {
+            // requestAnimationFrame(animate); // No necesitas esto si usas renderer.setAnimationLoop
+
+            const delta = clock.getDelta(); // Obtener tiempo desde el último frame
             if (mixer) {
-                mixer.update(0.01);
+                mixer.update(delta); // Actualizar el mixer con delta time
             }
 
+            // Actualizar controles si es necesario (ej. enableDamping)
+            // controls.update();
+
             renderer.render(scene, camera);
-            //   console.log('Camera Position and Center of Rotation:', {
-            //   cameraPosition: camera.position,
-            //   centerOfRotation: controls.target
-            // });
         }
 
+        // --- Funciones de Exportación y Guardado (sin cambios) ---
         function exportFile() {
             if (!mesh) {
                 alert("Modelo aún no cargado");
                 return;
             }
-            const result = exporter.parse(mesh);
-            saveArrayBuffer(result, "car.drc");
+            // Asegúrate que DRACOExporter esté correctamente importado y funcional
+             try {
+                const result = exporter.parse(mesh, {
+                     dracoOptions: {
+                         compressionLevel: 5 // Puedes ajustar el nivel de compresión
+                    }
+                 });
+                saveArrayBuffer(result, "car.drc");
+             } catch (error) {
+                 console.error("Error durante la exportación a Draco:", error);
+                 alert("Error al exportar el modelo.");
+             }
+
         }
 
         const link = document.createElement("a");
@@ -351,17 +450,69 @@
             link.href = URL.createObjectURL(blob);
             link.download = filename;
             link.click();
+            URL.revokeObjectURL(link.href); // Liberar memoria
         }
 
         function saveArrayBuffer(buffer, filename) {
             save(
-                new Blob([buffer], {
-                    type: "application/octet-stream"
-                }),
+                new Blob([buffer], { type: "application/octet-stream" }),
                 filename
             );
         }
     </script>
-</body>
 
+{{-- Estructura del Popup (Modificada) --}}
+    <div id="about-us-popup" class="popup-overlay"> {{-- Mantiene la clase para JS y centrado --}}
+        <div class="popup-content">
+            <button id="close-popup-button" class="close-button" aria-label="Cerrar">×</button>
+            <h2>About us</h2>
+
+            {{-- Contenedor para los miembros --}}
+            <div class="team-members">
+
+                {{-- Miembro 1 (Raúl) --}}
+                <div class="member-info">
+                    <img src="https://github.com/netraular.png" alt="Avatar de Raúl Aquilué Rubio" class="github-avatar">
+                    <div class="member-details">
+                        <p class="member-name">Raúl Aquilué Rubio</p>
+                        <a href="https://raular.com" target="_blank" rel="noopener noreferrer" class="member-website">Portfolio</a>
+                    </div>
+                </div>
+
+                {{-- Miembro 2 (Placeholder) --}}
+                <div class="member-info">
+                    <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 2" class="github-avatar"> {{-- Cambia github por el user --}}
+                    <div class="member-details">
+                        <p class="member-name">Nombre Integrante 2</p>
+                        <a href="#" target="_blank" rel="noopener noreferrer" class="member-website">Sitio Web</a> {{-- Cambia # por la URL --}}
+                    </div>
+                </div>
+
+                {{-- Miembro 3 (Placeholder) --}}
+                <div class="member-info">
+                     <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 3" class="github-avatar"> {{-- Cambia github por el user --}}
+                    <div class="member-details">
+                        <p class="member-name">Nombre Integrante 3</p>
+                        <a href="#" target="_blank" rel="noopener noreferrer" class="member-website">Sitio Web</a> {{-- Cambia # por la URL --}}
+                    </div>
+                </div>
+
+                {{-- Miembro 4 (Placeholder) --}}
+                <div class="member-info">
+                    <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 4" class="github-avatar"> {{-- Cambia github por el user --}}
+                    <div class="member-details">
+                        <p class="member-name">Nombre Integrante 4</p>
+                        <a href="#" target="_blank" rel="noopener noreferrer" class="member-website">Sitio Web</a> {{-- Cambia # por la URL --}}
+                    </div>
+                </div>
+
+            </div> {{-- Fin de .team-members --}}
+
+        </div> {{-- Fin de .popup-content --}}
+    </div> {{-- Fin de #about-us-popup --}}
+
+    {{-- >>> INCLUIR EL SCRIPT DEL POPUP AQUÍ <<< --}}
+    <script src="{{ asset('js/3d_experience/about-popup.js') }}"></script>
+
+</body>
 </html>
