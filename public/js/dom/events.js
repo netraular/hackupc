@@ -44,7 +44,7 @@ export function setupEventListeners(agent) {
         try {
             await agent.disconnect();
             showConnectButton();
-            [elements.cameraBtn, elements.screenBtn, elements.micBtn].forEach(btn => btn.classList.remove('active'));
+            [elements.micBtn].forEach(btn => btn.classList.remove('active'));
             isCameraActive = false;
         } catch (error) {
             console.error('Error disconnecting:', error);
@@ -73,24 +73,24 @@ export function setupEventListeners(agent) {
     });
 
     // Camera toggle handler
-    elements.cameraBtn.addEventListener('click', async () => {
-        try {
-            await ensureAgentReady(agent);
+    // elements.cameraBtn.addEventListener('click', async () => {
+    //     try {
+    //         await ensureAgentReady(agent);
             
-            if (!isCameraActive) {
-                await agent.startCameraCapture();
-                elements.cameraBtn.classList.add('active');
-            } else {
-                await agent.stopCameraCapture();
-                elements.cameraBtn.classList.remove('active');
-            }
-            isCameraActive = !isCameraActive;
-        } catch (error) {
-            console.error('Error toggling camera:', error);
-            elements.cameraBtn.classList.remove('active');
-            isCameraActive = false;
-        }
-    });
+    //         if (!isCameraActive) {
+    //             await agent.startCameraCapture();
+    //             elements.cameraBtn.classList.add('active');
+    //         } else {
+    //             await agent.stopCameraCapture();
+    //             elements.cameraBtn.classList.remove('active');
+    //         }
+    //         isCameraActive = !isCameraActive;
+    //     } catch (error) {
+    //         console.error('Error toggling camera:', error);
+    //         elements.cameraBtn.classList.remove('active');
+    //         isCameraActive = false;
+    //     }
+    // });
 
     // Screen sharing handler
     let isScreenShareActive = false;
@@ -102,24 +102,24 @@ export function setupEventListeners(agent) {
         console.info('Screen share stopped');
     });
 
-    elements.screenBtn.addEventListener('click', async () => {
-        try {
-            await ensureAgentReady(agent);
+    // elements.screenBtn.addEventListener('click', async () => {
+    //     try {
+    //         await ensureAgentReady(agent);
             
-            if (!isScreenShareActive) {
-                await agent.startScreenShare();
-                elements.screenBtn.classList.add('active');
-            } else {
-                await agent.stopScreenShare();
-                elements.screenBtn.classList.remove('active');
-            }
-            isScreenShareActive = !isScreenShareActive;
-        } catch (error) {
-            console.error('Error toggling screen share:', error);
-            elements.screenBtn.classList.remove('active');
-            isScreenShareActive = false;
-        }
-    });
+    //         if (!isScreenShareActive) {
+    //             await agent.startScreenShare();
+    //             elements.screenBtn.classList.add('active');
+    //         } else {
+    //             await agent.stopScreenShare();
+    //             elements.screenBtn.classList.remove('active');
+    //         }
+    //         isScreenShareActive = !isScreenShareActive;
+    //     } catch (error) {
+    //         console.error('Error toggling screen share:', error);
+    //         elements.screenBtn.classList.remove('active');
+    //         isScreenShareActive = false;
+    //     }
+    // });
 
     // Message sending handlers
     const sendMessage = async () => {

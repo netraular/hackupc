@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (panelSections.length > 0) {
         // Si no hay pestañas, activar la primera sección directamente
         panelSections[0].classList.add('active');
+         console.log(`Sección inicial activada directamente: ${panelSections[0].id}`);
     }
 
     console.log("Controlador del FAB inicializado.");

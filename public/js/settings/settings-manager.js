@@ -111,7 +111,7 @@ class SettingsManager {
         this.elements.deepgramApiKeyInput.value = localStorage.getItem('deepgramApiKey') || '';
         this.elements.voiceSelect.value = localStorage.getItem('voiceName') || 'Aoede';
         this.elements.sampleRateInput.value = localStorage.getItem('sampleRate') || '27000';
-        this.elements.systemInstructionsInput.value = localStorage.getItem('systemInstructions') || 'You are a helpful assistant';
+        this.elements.systemInstructionsInput.value = localStorage.getItem('systemInstructions') || "You are a helpful and knowledgeable assistant supporting users who have recently purchased a CUPRA Tavascan and are eagerly awaiting its delivery. Your role is to explain the car's features, answer their questions using information from the owner's manual, and build excitement about their new vehicle. Encourage the user to explore the car virtually. For example, ask if they’d like to take a look inside the frunk, open any of the doors, or check specific features using the manual. Make the experience interactive and informative, while maintaining a friendly and enthusiastic tone.";
         this.elements.temperatureInput.value = localStorage.getItem('temperature') || '1.8';
         this.elements.topPInput.value = localStorage.getItem('top_p') || '0.95';
         this.elements.topKInput.value = localStorage.getItem('top_k') || '65';

@@ -70,8 +70,8 @@ body {
 }
 
 .mic-btn {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background-color: var(--button-bg);
     border: 2px solid var(--accent-color);
@@ -83,7 +83,7 @@ body {
     transition: all 0.3s ease;
     z-index: 2;
     position: absolute;
-    bottom: 22px;
+    top: 22px;
     right: 25px;
 }
 
@@ -125,9 +125,9 @@ body {
 }
 
 /* Media query for small devices */
-@media screen and (max-width: 350px) {
+/* @media screen and (max-width: 350px) {
     .mic-btn {
-        bottom: 80px;
+        top: 80px;
     }
     
     .camera-btn {
@@ -137,7 +137,7 @@ body {
     .screen-btn {
         bottom: 140px;
     }
-}
+} */
 
 .mic-btn:hover {
     background-color: var(--button-hover);
