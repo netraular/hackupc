@@ -225,7 +225,18 @@ function init() {
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-    
+
+    document.addEventListener('open-trunk', function() {
+        doAnimation(0, clip[0], mixer);
+    });
+
+    document.addEventListener('open_r_b_door', function() {
+        doAnimation(1, clip[1], mixer);
+    });
+
+    document.addEventListener('open_l_b_door', function() {
+        doAnimation(2, clip[2], mixer);
+    });
     function doAnimation(indexAnimation, animation, localMixer) { // Renombrado mixer a localMixer para evitar confusión
         if (!localMixer || !animation) { // Añadida comprobación para animation
             console.warn("El mixer o la animación no están listos para el índice:", indexAnimation);
@@ -242,7 +253,7 @@ function init() {
              action.setLoop(THREE.LoopOnce, 1);
              action.clampWhenFinished = true;
              action.zeroSlopeAtEnd = true; // Considera si realmente necesitas esto
-             action.timeScale = 5; // O ajusta según necesites
+             action.timeScale = 1; // O ajusta según necesites
              action.play();
         } catch (error) {
              console.error("Error al intentar reproducir la animación:", indexAnimation, error);
@@ -287,24 +298,24 @@ function init() {
 
     // Set up a listener for our custom animation event
     document.addEventListener('open-car-trunk', function() {
-        // if (mixer && action) {
-        //     // Set button color to blue
-        //     button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul
-        //     // Reset to frame 0
-        //     action.reset();
-        //     // Only animate once
-        //     action.setLoop(THREE.LoopOnce, 1);
-        //     action.clampWhenFinished = true;
-        //     // Smooth slope at end
-        //     action.zeroSlopeAtEnd = true;
-        //     // Increase animation speed
-        //     action.timeScale = 5;
-        //     // Start animation
-        //     action.play();
-        //     console.log("Animation triggered via custom event");
-        // } else {
-        //     console.warn("Mixer or action not available yet");
-        // }
+        if (mixer && action) {
+            // Set button color to blue
+            button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul
+            // Reset to frame 0
+            action.reset();
+            // Only animate once
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            // Smooth slope at end
+            action.zeroSlopeAtEnd = true;
+            // Increase animation speed
+            action.timeScale = 5;
+            // Start animation
+            action.play();
+            console.log("Animation triggered via custom event");
+        } else {
+            console.warn("Mixer or action not available yet");
+        }
     });
 
     // Escuchar eventos personalizados del botón para manejar UI
@@ -338,7 +349,7 @@ function init() {
     scene.add(reticle);
 
     loader.load(
-        '3dmodel/oficial.glb',
+        '3dmodel/oficial_3.glb',
         function (gltf) {
             placedObject = gltf.scene;
             placedObject.visible = false;
@@ -351,8 +362,8 @@ function init() {
 
             animation1 = window.document.getElementById("animation1");
 
-            clip = gltf.animations[1];
-            doAnimation(1, clip, mixer);
+            clip = gltf.animations;
+            
             // 7) Cuando el mixer dispare el evento "finished"
             mixer.addEventListener("finished", (e) => {
                 console.log("finished animating"); 

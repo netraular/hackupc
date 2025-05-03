@@ -1,14 +1,14 @@
 /**
  * CarTrunkTool - Triggers the 'open-car-trunk' event to animate the car trunk in AR mode
  */
-export class CarTrunkTool {
+export class openCarRightBackTool {
     /**
      * Returns the tool declaration for Gemini
      */
     getDeclaration() {
         return {
-            name: "openCarTrunk",
-            description: "Opens the car trunk in AR mode",
+            name: "openCarRightBack",
+            description: "Opens the car right back door in AR mode",
         };
     }
 
@@ -19,10 +19,10 @@ export class CarTrunkTool {
      */
     execute(args) {
         // Dispatch the custom event to open the car trunk
-        const event = new CustomEvent('open-trunk');
+        const event = new CustomEvent('open_r_b_door');
         document.dispatchEvent(event);
         
         console.log('Car trunk event dispatched by Gemini');
-        return "I've opened the car trunk for you. Take a look in AR mode!";
+        return "I've opened the car right back door for you. Take a look in AR mode!";
     }
 }

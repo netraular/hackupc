@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"> {{-- Cambiado a lang de Laravel --}}
+
 <head>
     <title>MODEL 3D</title>
     <meta charset="utf-8" />
@@ -14,44 +15,58 @@
     <style>
         /* Overlay: cubre todo y centra contenido con Flexbox */
         .popup-overlay {
-            position: fixed; /* Fijo en la pantalla */
+            position: fixed;
+            /* Fijo en la pantalla */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7); /* Fondo más oscuro */
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Fondo más oscuro */
             z-index: 1000;
-            display: flex; /* Habilita Flexbox */
-            justify-content: center; /* Centra horizontalmente */
-            align-items: center; /* Centra verticalmente */
+            display: flex;
+            /* Habilita Flexbox */
+            justify-content: center;
+            /* Centra horizontalmente */
+            align-items: center;
+            /* Centra verticalmente */
             /* Inicialmente oculto (el JS lo mostrará cambiando display a 'flex') */
             display: none;
-            padding: 20px; /* Espacio por si el popup es muy grande */
+            padding: 20px;
+            /* Espacio por si el popup es muy grande */
             box-sizing: border-box;
         }
 
         /* Contenido del Popup */
         .popup-content {
             background-color: #fff;
-            padding: 25px 30px; /* Ajusta padding */
-            border-radius: 10px; /* Bordes más redondeados */
+            padding: 25px 30px;
+            /* Ajusta padding */
+            border-radius: 10px;
+            /* Bordes más redondeados */
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
-            max-width: 550px; /* Un poco más ancho */
-            width: 95%; /* Más responsivo */
+            max-width: 550px;
+            /* Un poco más ancho */
+            width: 95%;
+            /* Más responsivo */
             position: relative;
             text-align: left;
             color: #333;
-            max-height: 90vh; /* Altura máxima para evitar desbordamiento */
-            overflow-y: auto; /* Scroll si el contenido es muy largo */
+            max-height: 90vh;
+            /* Altura máxima para evitar desbordamiento */
+            overflow-y: auto;
+            /* Scroll si el contenido es muy largo */
         }
 
         .popup-content h2 {
             margin-top: 0;
-            margin-bottom: 20px; /* Más espacio debajo del título */
+            margin-bottom: 20px;
+            /* Más espacio debajo del título */
             color: #333;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
-            text-align: center; /* Centrar título */
+            text-align: center;
+            /* Centrar título */
         }
 
         /* Botón de cerrar */
@@ -59,15 +74,18 @@
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 28px; /* Más grande */
+            font-size: 28px;
+            /* Más grande */
             font-weight: bold;
-            color: #aaa; /* Más suave */
+            color: #aaa;
+            /* Más suave */
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
             line-height: 1;
         }
+
         .close-button:hover {
             color: #333;
         }
@@ -75,40 +93,54 @@
         /* Contenedor de todos los miembros */
         .team-members {
             display: flex;
-            flex-direction: column; /* Apila los miembros verticalmente */
-            gap: 20px; /* Espacio entre miembros */
+            flex-direction: column;
+            /* Apila los miembros verticalmente */
+            gap: 20px;
+            /* Espacio entre miembros */
         }
 
         /* Estilo para cada bloque de miembro */
         .member-info {
-            display: flex; /* Imagen y texto en línea */
-            align-items: center; /* Centra verticalmente imagen y texto */
-            gap: 15px; /* Espacio entre imagen y texto */
+            display: flex;
+            /* Imagen y texto en línea */
+            align-items: center;
+            /* Centra verticalmente imagen y texto */
+            gap: 15px;
+            /* Espacio entre imagen y texto */
             padding: 10px;
-            border-bottom: 1px solid #f0f0f0; /* Separador suave */
+            border-bottom: 1px solid #f0f0f0;
+            /* Separador suave */
         }
+
         .member-info:last-child {
-            border-bottom: none; /* No poner borde al último */
+            border-bottom: none;
+            /* No poner borde al último */
         }
 
         /* Estilo para la imagen de GitHub */
         .github-avatar {
-            width: 60px; /* Tamaño fijo */
+            width: 60px;
+            /* Tamaño fijo */
             height: 60px;
-            border-radius: 50%; /* Hace la imagen redonda */
-            object-fit: cover; /* Evita que la imagen se deforme */
-            border: 2px solid #eee; /* Borde sutil */
+            border-radius: 50%;
+            /* Hace la imagen redonda */
+            object-fit: cover;
+            /* Evita que la imagen se deforme */
+            border: 2px solid #eee;
+            /* Borde sutil */
         }
 
         /* Contenedor para nombre y enlace */
         .member-details {
-            flex-grow: 1; /* Ocupa el espacio restante */
+            flex-grow: 1;
+            /* Ocupa el espacio restante */
         }
 
         /* Estilo para el nombre del miembro */
         .member-name {
             font-weight: bold;
-            margin: 0 0 5px 0; /* Sin margen superior, poco inferior */
+            margin: 0 0 5px 0;
+            /* Sin margen superior, poco inferior */
             font-size: 1.1em;
             color: #444;
         }
@@ -119,6 +151,7 @@
             text-decoration: none;
             font-size: 0.9em;
         }
+
         .member-website:hover {
             text-decoration: underline;
         }
@@ -134,6 +167,7 @@
             margin: 5px;
             font-size: 14px;
         }
+
         #about-us-button:hover {
             background-color: #5a6268;
         }
@@ -203,19 +237,19 @@
             }
             // Intentar obtener la acción
             try {
-                 const action = localMixer.clipAction(animation);
-                 if (!action) {
-                     console.warn("No se pudo crear la acción para la animación:", animation.name);
-                     return;
-                 }
-                 action.reset();
-                 action.setLoop(THREE.LoopOnce, 1);
-                 action.clampWhenFinished = true;
-                 action.zeroSlopeAtEnd = true; // Considera si realmente necesitas esto
-                 action.timeScale = 5; // O ajusta según necesites
-                 action.play();
+                const action = localMixer.clipAction(animation);
+                if (!action) {
+                    console.warn("No se pudo crear la acción para la animación:", animation.name);
+                    return;
+                }
+                action.reset();
+                action.setLoop(THREE.LoopOnce, 1);
+                action.clampWhenFinished = true;
+                action.zeroSlopeAtEnd = true; // Considera si realmente necesitas esto
+                action.timeScale = 1; // O ajusta según necesites
+                action.play();
             } catch (error) {
-                 console.error("Error al intentar reproducir la animación:", indexAnimation, error);
+                console.error("Error al intentar reproducir la animación:", indexAnimation, error);
             }
 
         }
@@ -346,7 +380,7 @@
                     camera.position.copy(fixedPosition);
                     controls.target.set(0, 1, 2); // Ajusta hacia donde mira (adelante)
                     controls.update();
-                     camera.lookAt(controls.target); // Asegúrate que mire al target
+                    camera.lookAt(controls.target); // Asegúrate que mire al target
                 });
 
             // GUI
@@ -361,18 +395,26 @@
 
             // Texto random
             const txt = textos[Math.floor(Math.random() * textos.length)];
-            const CW = 512, CH = 128;
+            const CW = 512,
+                CH = 128;
             const cvs = document.createElement("canvas");
-            cvs.width = CW; cvs.height = CH;
+            cvs.width = CW;
+            cvs.height = CH;
             const ctx = cvs.getContext("2d");
-            ctx.fillStyle = "#222"; ctx.fillRect(0, 0, CW, CH);
-            ctx.font = "48px sans-serif"; ctx.fillStyle = "#fff";
-            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillStyle = "#222";
+            ctx.fillRect(0, 0, CW, CH);
+            ctx.font = "48px sans-serif";
+            ctx.fillStyle = "#fff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
             ctx.fillText(txt, CW / 2, CH / 2);
             const txtTex = new THREE.CanvasTexture(cvs);
             const txtMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(2, 0.5),
-                new THREE.MeshBasicMaterial({ map: txtTex, transparent: true })
+                new THREE.MeshBasicMaterial({
+                    map: txtTex,
+                    transparent: true
+                })
             );
             panelGroup.add(txtMesh);
 
@@ -381,18 +423,20 @@
                 const ar = imgTex.image.width / imgTex.image.height;
                 const imgMesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(1.5 * ar, 1.5),
-                    new THREE.MeshBasicMaterial({ map: imgTex })
+                    new THREE.MeshBasicMaterial({
+                        map: imgTex
+                    })
                 );
                 imgMesh.position.y = -1.0; // Ajustado para que no solape tanto con el texto
                 panelGroup.add(imgMesh);
             });
 
             // Colocar frente a cámara dinámicamente
-             const distance = 3; // Distancia desde la cámara
-             const targetPosition = new THREE.Vector3();
-             camera.getWorldDirection(targetPosition); // Obtener dirección de la cámara
-             targetPosition.multiplyScalar(distance); // Mover en esa dirección
-             targetPosition.add(camera.position); // Sumar posición actual de la cámara
+            const distance = 3; // Distancia desde la cámara
+            const targetPosition = new THREE.Vector3();
+            camera.getWorldDirection(targetPosition); // Obtener dirección de la cámara
+            targetPosition.multiplyScalar(distance); // Mover en esa dirección
+            targetPosition.add(camera.position); // Sumar posición actual de la cámara
 
             panelGroup.position.copy(targetPosition);
             panelGroup.lookAt(camera.position); // Hacer que el panel mire a la cámara
@@ -428,17 +472,17 @@
                 return;
             }
             // Asegúrate que DRACOExporter esté correctamente importado y funcional
-             try {
+            try {
                 const result = exporter.parse(mesh, {
-                     dracoOptions: {
-                         compressionLevel: 5 // Puedes ajustar el nivel de compresión
+                    dracoOptions: {
+                        compressionLevel: 5 // Puedes ajustar el nivel de compresión
                     }
-                 });
+                });
                 saveArrayBuffer(result, "car.drc");
-             } catch (error) {
-                 console.error("Error durante la exportación a Draco:", error);
-                 alert("Error al exportar el modelo.");
-             }
+            } catch (error) {
+                console.error("Error durante la exportación a Draco:", error);
+                alert("Error al exportar el modelo.");
+            }
 
         }
 
@@ -455,13 +499,15 @@
 
         function saveArrayBuffer(buffer, filename) {
             save(
-                new Blob([buffer], { type: "application/octet-stream" }),
+                new Blob([buffer], {
+                    type: "application/octet-stream"
+                }),
                 filename
             );
         }
     </script>
 
-{{-- Estructura del Popup (Modificada) --}}
+    {{-- Estructura del Popup (Modificada) --}}
     <div id="about-us-popup" class="popup-overlay"> {{-- Mantiene la clase para JS y centrado --}}
         <div class="popup-content">
             <button id="close-popup-button" class="close-button" aria-label="Cerrar">×</button>
@@ -481,16 +527,16 @@
 
                 {{-- Miembro 2 (Placeholder) --}}
                 <div class="member-info">
-                    <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 2" class="github-avatar"> {{-- Cambia github por el user --}}
+                    <img src="https://github.com/github.png" alt="Avatar de Alexis Gabriel Diaz Fajardo" class="github-avatar"> {{-- Cambia github por el user --}}
                     <div class="member-details">
-                        <p class="member-name">Nombre Integrante 2</p>
+                        <p class="member-name">Alexis Gabriel Diaz Fajardo</p>
                         <a href="#" target="_blank" rel="noopener noreferrer" class="member-website">Sitio Web</a> {{-- Cambia # por la URL --}}
                     </div>
                 </div>
 
                 {{-- Miembro 3 (Placeholder) --}}
                 <div class="member-info">
-                     <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 3" class="github-avatar"> {{-- Cambia github por el user --}}
+                    <img src="https://github.com/github.png" alt="Avatar de Nombre Integrante 3" class="github-avatar"> {{-- Cambia github por el user --}}
                     <div class="member-details">
                         <p class="member-name">Nombre Integrante 3</p>
                         <a href="#" target="_blank" rel="noopener noreferrer" class="member-website">Sitio Web</a> {{-- Cambia # por la URL --}}
@@ -515,4 +561,5 @@
     <script src="{{ asset('js/3d_experience/about-popup.js') }}"></script>
 
 </body>
+
 </html>

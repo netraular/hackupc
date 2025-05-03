@@ -18,6 +18,10 @@ return [
     'google' => [
         'credentials' => env('GOOGLE_APPLICATION_CREDENTIALS'),
         'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
+        'tts' => [
+            'language_code' => env('GOOGLE_TTS_LANGUAGE_CODE'),
+            'voice_name' => env('GOOGLE_TTS_VOICE_NAME'),
+       ],
     ],
     
     'n8n' => [
