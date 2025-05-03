@@ -41,19 +41,21 @@ export class PdfRagTool {
      */
     async execute(args) {
         try {
-            const { query, pdfPath } = args;
+            const { query } = args;
             const dataToSend = JSON.stringify({ message: query });
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': csrfToken
             };
-            const response = await fetch('{{ route("chat.send") }}', {
+            const response = await fetch('/chat/send', {
                 method: 'POST',
                 headers: headers,
                 body: dataToSend // Siempre enviamos JSON
             });
-            return response;
+            const jsonResponse = await response.json();
+            return jsonResponse.reply;
             
         } catch (error) {
             console.error("Error in PDF search:", error);
