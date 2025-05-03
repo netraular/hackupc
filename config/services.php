@@ -13,6 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+
+    
+    'google' => [
+        'credentials' => env('GOOGLE_APPLICATION_CREDENTIALS'),
+    ],
+    
     'n8n' => [
         'webhook_url' => env('N8N_WEBHOOK_URL'),
     ],

@@ -3,6 +3,8 @@ import { getConfig, getWebsocketUrl, getDeepgramApiKey, MODEL_SAMPLE_RATE } from
 
 import { GoogleSearchTool } from './tools/google-search.js';
 import { CarTrunkTool } from './tools/car-trunk.js';
+// import { PineconeRagTool } from './tools/pinecone-rag.js';
+import { PdfRagTool } from './tools/pdf-rag.js';
 import { ToolManager } from './tools/tool-manager.js';
 import { ChatManager } from '/public/js/chat/chat-manager.js';
 
@@ -15,6 +17,8 @@ const deepgramApiKey = getDeepgramApiKey();
 const toolManager = new ToolManager();
 toolManager.registerTool('googleSearch', new GoogleSearchTool());
 toolManager.registerTool('openCarTrunk', new CarTrunkTool());
+// toolManager.registerTool('carRagSearch', new PineconeRagTool());
+toolManager.registerTool('pdfSearch', new PdfRagTool());
 
 
 const chatManager = new ChatManager();
