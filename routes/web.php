@@ -22,10 +22,6 @@ Route::get('/ar', function () {
     return view('ar_experience/ar');
 })->name('ar');
 
-Route::get('/artest1', function () {
-    return view('ar_experience/artest1');
-})->name('artest1');
-
 Route::get('/webdemo', function () {
     return view('ar_experience/webdemo');
 })->name('webdemo');

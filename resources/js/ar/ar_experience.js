@@ -1,6 +1,12 @@
-
+// Import statements need to come first, before any other code
 import * as THREE from 'three';
-// test
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// Only log after imports are complete
+console.log('ImportMap correctly loaded');
+
+const loader = new GLTFLoader();
+
 // --- INICIO: Código de ARButton.js (pegado directamente aquí) ---
 // (Código fuente obtenido de https://github.com/mrdoob/three.js/blob/dev/examples/jsm/webxr/ARButton.js)
 // Ligeramente adaptado para encajar como clase dentro del módulo
@@ -13,6 +19,33 @@ class ARButton {
                 const overlay = document.createElement( 'div' );
                 overlay.style.display = 'none';
                 document.body.appendChild( overlay );
+
+                const animationButton = document.createElement('button');
+                animationButton.id = 'animation1';
+                animationButton.textContent = 'animation 1';
+                animationButton.style.position = 'absolute';
+                animationButton.style.left = '20px';
+                animationButton.style.top = '20px';
+                animationButton.style.zIndex = '10000'; // Higher z-index
+                animationButton.style.padding = '10px 20px'; // More padding
+                animationButton.style.backgroundColor = 'rgba(255, 50, 50, 0.7)'; // More visible color
+                animationButton.style.color = 'white';
+                animationButton.style.border = '2px solid white';
+                animationButton.style.borderRadius = '5px';
+                animationButton.style.fontSize = '16px';
+                animationButton.style.fontWeight = 'bold';
+                animationButton.style.cursor = 'pointer';
+                
+                // Touch events for mobile
+                animationButton.addEventListener('touchstart', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log('Animation button touched');
+                    const evt = new CustomEvent('animation1-clicked');
+                    document.dispatchEvent(evt);
+                }, true); // Use capture phase
+                
+                overlay.appendChild(animationButton);
 
                 const svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
                 svg.setAttribute( 'width', 38 );
@@ -104,7 +137,7 @@ class ARButton {
 
         function showARNotSupported() {
             disableButton();
-            button.textContent = 'AR NOT SUPPORTED 1';
+            button.textContent = 'AR NOT SUPPORTED';
              // Mostrar mensaje de error más claro
              const errorDiv = document.createElement('div');
              errorDiv.className = 'ar-error-message';
@@ -177,6 +210,11 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let placedObject = null; // Referencia al cubo
 
+let mixer = "";
+let action = "";
+let clip = "";
+let animation1 = "";
+
 init();
 // La animación se inicia/detiene por el botón AR
 
@@ -188,12 +226,28 @@ function init() {
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
-    // Luces
+    // --- Luces ---
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
+
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(1, 1, 0).normalize();
     scene.add(directionalLight);
+
+    // --- Más fuentes de luz ---
+    // Adding a Point Light (which emits light in all directions)
+    const pointLight = new THREE.PointLight(0xffffff, 1, 10); // White light, intensity: 1, distance: 10
+    pointLight.position.set(0, 2, 5); // Position it in front of the car
+    scene.add(pointLight);
+
+    // Adding a SpotLight (can focus light in a specific direction)
+    const spotLight = new THREE.SpotLight(0xffffff, 2, 10, Math.PI / 4, 0.5, 1); // Intensity: 2, distance: 10
+    spotLight.position.set(2, 5, 5); // Position it above the scene to highlight the model
+    scene.add(spotLight);
+
+    // Adding a helper to visualize the spot light (Optional, for debugging)
+    const spotLightHelper = new THREE.SpotLightHelper(spotLight);
+    scene.add(spotLightHelper);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -209,11 +263,33 @@ function init() {
         requiredFeatures: ['hit-test'] // Esencial para detectar superficies
     });
 
+    // Set up a listener for our custom animation event
+    document.addEventListener('animation1-clicked', function() {
+        if (mixer && action) {
+            // Set button color to blue
+            button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul
+            // Reset to frame 0
+            action.reset();
+            // Only animate once
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            // Smooth slope at end
+            action.zeroSlopeAtEnd = true;
+            // Increase animation speed
+            action.timeScale = 5;
+            // Start animation
+            action.play();
+            console.log("Animation triggered via custom event");
+        } else {
+            console.warn("Mixer or action not available yet");
+        }
+    });
+
     // Escuchar eventos personalizados del botón para manejar UI
-     button.addEventListener('sessionstart', () => {
+    button.addEventListener('sessionstart', () => {
          infoElement.style.display = 'block'; // Mostrar instrucciones al entrar en AR
      });
-     button.addEventListener('sessionend', () => {
+    button.addEventListener('sessionend', () => {
          // Limpiar al salir de AR
          infoElement.style.display = 'none';
          if (placedObject) placedObject.visible = false;
@@ -239,16 +315,91 @@ function init() {
     reticle.visible = false; // Invisible hasta detectar superficie
     scene.add(reticle);
 
-    // --- Objeto a Colocar (CUBO SIMPLE) ---
-    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1); // Cubo de 10cm
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x0099ff, // Azulado
-        roughness: 0.6,
-        metalness: 0.1
-     });
-    placedObject = new THREE.Mesh(geometry, material);
-    placedObject.visible = false; // Inicialmente invisible
-    scene.add(placedObject);
+    loader.load(
+        '3d/oficial.glb',
+        function (gltf) {
+            placedObject = gltf.scene;
+            placedObject.visible = false;
+            scene.add(placedObject);
+
+            // Scale the model to 10% of its original size
+            placedObject.scale.set(0.1, 0.1, 0.1);
+
+            mixer = new THREE.AnimationMixer(placedObject);
+
+            animation1 = window.document.getElementById("animation1");
+            action = mixer.clipAction(gltf.animations[0]);
+            clip = gltf.animations[0];
+            
+            // 7) Cuando el mixer dispare el evento "finished"
+            mixer.addEventListener("finished", (e) => {
+                console.log("finished animating"); 
+            });
+        },
+        undefined,
+        function (error) {
+        console.error("Error al cargar car.glb:", error);
+        }
+);
+
+// Update the animation mixer inside the render loop
+// function animate() {
+//     if (mixer) {
+//         mixer.update(0.01); // Update animations by a small time step (you can tweak this)
+//     }
+// }
+
+function animate() {
+    //
+    if (mixer) {
+      mixer.update(0.01);
+    }
+  }
+
+
+function renderLoop(timestamp, frame) {
+    if (renderer.xr.isPresenting) { // Only process AR if the session is active
+        if (frame) { // The frame object only exists inside an XR session
+            const referenceSpace = renderer.xr.getReferenceSpace();
+            const session = renderer.xr.getSession();
+
+            // Request hit-test source if we don't have it
+            if (hitTestSourceRequested === false) {
+                session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+                    session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
+                        hitTestSource = source;
+                    });
+                });
+
+                hitTestSourceRequested = true;
+            }
+
+            // Get hit-test results
+            if (hitTestSource) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                if (hitTestResults.length > 0) {
+                    // Surface found
+                    const hit = hitTestResults[0];
+                    reticle.visible = true;
+                    // Update the position and orientation of the reticle
+                    reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+                } else {
+                    // No surface found
+                    reticle.visible = false;
+                }
+            }
+        }
+
+        // Update animations in the render loop
+        animate();
+
+        // Render the scene
+        renderer.render(scene, camera);
+    }
+}
+
+
 
     // --- Eventos y Bucle de Renderizado ---
     window.addEventListener('resize', onWindowResize);
@@ -261,7 +412,13 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function onSelect() {
+function onSelect(event) {
+    // Check if the event originated from our animation button and skip if so
+    // if (event.target && (event.target.id === 'animation1' || event.target.closest('#animation1'))) {
+    //     console.log('Ignoring onSelect because it came from animation button');
+    //     return;
+    // }
+    
     // Se llama al tocar la pantalla en modo AR
     if (reticle.visible && placedObject) {
         // Colocar el cubo en la posición de la retícula
@@ -275,53 +432,4 @@ function onSelect() {
         // reticle.visible = false;
         // controller.removeEventListener('select', onSelect); // Dejar de detectar taps
     }
-}
-
-// Bucle de Renderizado (se ejecuta cada frame)
-function renderLoop(timestamp, frame) {
-    if (renderer.xr.isPresenting) { // Solo procesar AR si está activa la sesión
-        if (frame) { // El objeto frame solo existe dentro de una sesión XR
-            const referenceSpace = renderer.xr.getReferenceSpace();
-            const session = renderer.xr.getSession();
-
-            // Solicitar fuente de hit-test si no la tenemos
-            if (hitTestSourceRequested === false) {
-                session.requestReferenceSpace('viewer').then(function (referenceSpace) {
-                    session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-                        hitTestSource = source;
-                    });
-                });
-
-                // Ya no necesitamos el listener 'end' aquí, lo maneja el botón
-                // session.addEventListener('end', function () { ... });
-
-                hitTestSourceRequested = true;
-            }
-
-            // Obtener resultados del hit-test
-            if (hitTestSource) {
-                const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                if (hitTestResults.length > 0) {
-                    // Superficie encontrada
-                    const hit = hitTestResults[0];
-                    reticle.visible = true;
-                    // Actualizar la posición y orientación de la retícula
-                    reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-                } else {
-                    // No se encontró superficie
-                    reticle.visible = false;
-                }
-            }
-        }
-
-        // Renderizar la escena
-        renderer.render(scene, camera);
-
-     } else {
-          // Si no estamos en modo AR, podríamos renderizar una vista normal
-          // o simplemente no hacer nada si la app es solo AR.
-          // Por ahora, no hacemos nada si no está presentando XR.
-          // renderer.render(scene, camera); // Descomentar si quieres ver algo fuera de AR
-     }
 }

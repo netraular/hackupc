@@ -31,7 +31,6 @@
     <script type="module">
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-      import { DRACOExporter } from "three/addons/exporters/DRACOExporter.js";
       import { GUI } from "three/addons/libs/lil-gui.module.min.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
@@ -39,10 +38,6 @@
       let mixer = "";
       let action = "";
       let clip = "";
-
-      const params = {
-        export: exportFile,
-      };
 
       init();
 
@@ -58,8 +53,6 @@
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa0a0a0);
         scene.fog = new THREE.Fog(0xa0a0a0, 4, 20);
-
-        exporter = new DRACOExporter();
 
         // Luces
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 3);
@@ -162,7 +155,6 @@
 
         // GUI
         const gui = new GUI();
-        gui.add(params, "export").name("Exportar DRC");
         gui.open();
       }
 
@@ -179,15 +171,6 @@
         }
 
         renderer.render(scene, camera);
-      }
-
-      function exportFile() {
-        if (!mesh) {
-          alert("Modelo aún no cargado");
-          return;
-        }
-        const result = exporter.parse(mesh);
-        saveArrayBuffer(result, "car.drc");
       }
 
       const link = document.createElement("a");
