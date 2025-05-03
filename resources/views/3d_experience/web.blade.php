@@ -61,6 +61,10 @@
                 <button class="panel-button" data-panel-animation="2" disabled>Animación 3</button>
                 <button class="panel-button" data-panel-animation="3" disabled>Animación 4</button>
                 <button class="panel-button" data-panel-animation="4" disabled>Animación 5</button>
+                <button class="panel-button" data-panel-animation="5" disabled>Animación 6</button>
+                <button class="panel-button" data-panel-animation="6" disabled>Animación 7</button>
+                <button class="panel-button" data-panel-animation="7" disabled>Animación 8</button>
+                <button class="panel-button" data-panel-animation="8" disabled>Animación 9</button>
                 <hr style="margin: 15px 0; border-color: #eee;">
                 {{-- Botón de Vista Interior FAB --}}
                 <button class="panel-button" data-panel-action="insideView">Vista Interior</button>
@@ -93,7 +97,7 @@
     {{-- Configuración JS (sin cambios) --}}
     <script>
       window.ExperienceConfig = {
-        modelUrl: "{{ asset('3dmodel/oficial.glb') }}",
+        modelUrl: "{{ asset('3dmodel/oficial_3.glb') }}",
         panelImageUrl: "{{ asset('3dmodel/imgs/carrito.jpg') }}"
       };
     </script>
