@@ -271,3 +271,174 @@
     /* Evita interacciones como el hover cuando está deshabilitado */
     pointer-events: none;
 }
+
+
+/* En fab-styles.css (como último recurso si la inspección revela un conflicto) */
+.fab-panel .panel-content-area > .panel-section {
+    display: none;
+}
+.fab-panel .panel-content-area > .panel-section.active {
+    display: block; /* o flex si usas flexbox dentro de la sección */
+}
+
+/* resources/css/3d_experience/chat-styles.css */
+
+/* Asegurar que estos estilos se apliquen dentro de la sección del chat */
+#panel-section-chat {
+    /* Ajustes específicos para la sección de chat si son necesarios */
+    /* Por ejemplo, si necesitas que el contenido llene el espacio */
+    flex-direction: column;
+    height: 100%; /* O ajusta según necesites dentro del panel */
+}
+
+#panel-section-chat #chatbox {
+    flex-grow: 1; /* Ocupa el espacio vertical disponible */
+    overflow-y: auto; /* Permite scroll si los mensajes exceden el espacio */
+    padding: 10px 0; /* Espaciado vertical, sin padding lateral aquí */
+    margin-bottom: 15px; /* Espacio antes del formulario */
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espacio entre contenedores de mensajes */
+}
+
+/* Contenedor general para cada mensaje (ayuda a alinear) */
+.message-container {
+    display: flex;
+    max-width: 95%; /* Evita que el contenedor ocupe todo el ancho */
+    padding: 0 5px; /* Ligero padding lateral para que no pegue al borde */
+}
+
+/* Contenedores de mensajes del usuario alineados a la derecha */
+.user-message-container {
+    justify-content: flex-end; /* Alinea el contenido (la burbuja) a la derecha */
+    margin-left: auto; /* Empuja el contenedor a la derecha */
+}
+
+/* Contenedores de mensajes de la IA alineados a la izquierda */
+.ai-message-container {
+    justify-content: flex-start; /* Alinea el contenido (la burbuja) a la izquierda */
+    margin-right: auto; /* Empuja el contenedor a la izquierda */
+}
+
+/* Estilo base de la burbuja de mensaje */
+.message {
+    padding: 10px 15px;
+    border-radius: 15px; /* Bordes redondeados */
+    line-height: 1.4;
+    max-width: 80%; /* Ancho máximo de la burbuja */
+    word-wrap: break-word; /* Rompe palabras largas */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+}
+
+/* Burbuja de mensaje del usuario */
+.user-message {
+    background-color: #007bff; /* Azul principal (como el FAB) */
+    color: white;
+    border-bottom-right-radius: 5px; /* Ligera variación en esquina */
+}
+
+/* Burbuja de mensaje de la IA */
+.ai-message {
+    background-color: #e9ecef; /* Gris claro (como el hover de las pestañas) */
+    color: #343a40; /* Texto oscuro */
+    border-bottom-left-radius: 5px; /* Ligera variación en esquina */
+}
+
+/* Indicador "Escribiendo..." */
+.typing-indicator {
+    font-style: italic;
+    color: #6c757d; /* Gris secundario */
+    padding: 8px 15px; /* Un poco menos de padding */
+}
+.typing-indicator-container .ai-message.typing-indicator {
+    background-color: #f8f9fa; /* Fondo muy claro */
+    box-shadow: none;
+}
+
+
+/* Formulario de entrada del chat */
+#panel-section-chat #chat-form {
+    display: flex;
+    gap: 10px; /* Espacio entre input y botón */
+    padding-top: 15px; /* Espacio sobre el formulario */
+    border-top: 1px solid #e0e0e0; /* Línea divisoria */
+    align-items: center; /* Centra verticalmente input y botón */
+}
+
+#panel-section-chat #message-input {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    padding: 10px 12px;
+    border: 1px solid #ced4da; /* Borde gris estándar */
+    border-radius: 20px; /* Input redondeado */
+    font-size: 0.95em;
+    outline: none; /* Quita el borde de foco por defecto */
+    transition: border-color 0.2s ease;
+}
+#panel-section-chat #message-input:focus {
+    border-color: #86b7fe; /* Borde azul al enfocar (similar a Bootstrap) */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra de foco */
+}
+#panel-section-chat #message-input::placeholder {
+    color: #6c757d; /* Color del placeholder */
+    opacity: 1; /* Asegura visibilidad en Firefox */
+}
+
+/* Contenedor de controles (si solo tiene el botón de enviar) */
+#panel-section-chat #controls-container {
+    /* No se necesita flex si el form ya es flex */
+}
+
+/* Botón de enviar */
+#panel-section-chat #send-button {
+    flex-shrink: 0; /* Evita que el botón se encoja */
+    background-color: #007bff; /* Mismo azul que el FAB y mensaje user */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Botón circular */
+    width: 40px; /* Tamaño fijo */
+    height: 40px; /* Tamaño fijo */
+    font-size: 16px; /* Tamaño del icono */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+#panel-section-chat #send-button:hover:not(:disabled) {
+    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+}
+#panel-section-chat #send-button:active:not(:disabled) {
+    transform: scale(0.95); /* Efecto de pulsación */
+}
+
+/* Estilos para el botón deshabilitado */
+#panel-section-chat #send-button:disabled,
+#panel-section-chat #send-button[disabled] {
+    background-color: #6c757d; /* Gris cuando está deshabilitado */
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Estilos para input deshabilitado */
+#panel-section-chat #message-input:disabled,
+#panel-section-chat #message-input[disabled] {
+    background-color: #e9ecef; /* Fondo gris claro */
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Ajuste para el scrollbar (opcional, estilo webkit) */
+#panel-section-chat #chatbox::-webkit-scrollbar {
+    width: 6px;
+}
+#panel-section-chat #chatbox::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+#panel-section-chat #chatbox::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+#panel-section-chat #chatbox::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}

@@ -8,7 +8,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.ts', 'resources/js/ar/ar_experience.js', 'resources/js/gemini-2-live-api-demo/script.js','resources/css/3d_experience/fab-styles.css'],
+            input: ['resources/js/app.ts', 'resources/js/ar/ar_experience.js', 'resources/js/gemini-2-live-api-demo/script.js','resources/css/3d_experience/fab-styles.css','resources/css/3d_experience/chat-styles.css'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),

@@ -8,7 +8,8 @@ console.log('ImportMap correctly loaded');
 const loader = new GLTFLoader();
 
 // --- INICIO: Código de ARButton.js (pegado directamente aquí) ---
-// (Your ARButton class code remains exactly the same here)
+// (Código fuente obtenido de https://github.com/mrdoob/three.js/blob/dev/examples/jsm/webxr/ARButton.js)
+// Ligeramente adaptado para encajar como clase dentro del módulo
 class ARButton {
     static createButton( renderer, sessionInit = {} ) {
         const button = document.createElement( 'button' );
@@ -19,43 +20,32 @@ class ARButton {
                 overlay.style.display = 'none';
                 document.body.appendChild( overlay );
 
-                // --- START: Your Animation Button Code ---
                 const animationButton = document.createElement('button');
                 animationButton.id = 'animation1';
-                animationButton.textContent = 'animation 1'; // You might want more descriptive text
+                animationButton.textContent = 'animation 1';
                 animationButton.style.position = 'absolute';
                 animationButton.style.left = '20px';
-                animationButton.style.top = '20px'; // Position might need adjustment
-                animationButton.style.zIndex = '10000';
-                animationButton.style.padding = '10px 20px';
-                animationButton.style.backgroundColor = 'rgba(255, 50, 50, 0.7)';
+                animationButton.style.top = '20px';
+                animationButton.style.zIndex = '10000'; // Higher z-index
+                animationButton.style.padding = '10px 20px'; // More padding
+                animationButton.style.backgroundColor = 'rgba(255, 50, 50, 0.7)'; // More visible color
                 animationButton.style.color = 'white';
                 animationButton.style.border = '2px solid white';
                 animationButton.style.borderRadius = '5px';
                 animationButton.style.fontSize = '16px';
                 animationButton.style.fontWeight = 'bold';
                 animationButton.style.cursor = 'pointer';
-
-                // Touch events for mobile (Added preventDefault and stopPropagation)
+                
+                // Touch events for mobile
                 animationButton.addEventListener('touchstart', function(event) {
-                    event.preventDefault(); // Prevent default touch actions like scrolling
-                    event.stopPropagation(); // Stop the event from bubbling up to the canvas
+                    event.preventDefault();
+                    event.stopPropagation();
                     console.log('Animation button touched');
-                    // --- TODO: Trigger your *specific* animation here ---
-                    // Example: You might want to link this button to a specific animation index
-                    // For now, let's assume it triggers the first animation if available
-                     if (mixer && clip && clip.length > 0) {
-                         doAnimation(0, clip[0], mixer); // Trigger the first animation
-                     } else {
-                         console.warn("Mixer or animations not ready for button press");
-                     }
-                    // const evt = new CustomEvent('open-car-trunk'); // Keep if needed elsewhere
-                    // document.dispatchEvent(evt);
-                }, true); // Use capture phase is fine
-
+                    const evt = new CustomEvent('open-car-trunk');
+                    document.dispatchEvent(evt);
+                }, true); // Use capture phase
+                
                 overlay.appendChild(animationButton);
-                // --- END: Your Animation Button Code ---
-
 
                 const svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
                 svg.setAttribute( 'width', 38 );
@@ -87,58 +77,76 @@ class ARButton {
                 sessionInit.domOverlay = { root: overlay };
             }
 
-            // ... (rest of showStartAR)
-             let currentSession = null;
+            //
 
-             async function onSessionStarted( session ) {
-                 session.addEventListener( 'end', onSessionEnded );
-                 renderer.xr.setReferenceSpaceType( 'local' );
-                 await renderer.xr.setSession( session );
-                 button.textContent = 'STOP AR';
-                 if (sessionInit.domOverlay) sessionInit.domOverlay.root.style.display = ''; // Show overlay
+            let currentSession = null;
 
-                 currentSession = session;
-                  // Disparar evento personalizado o llamar a una función cuando la sesión empieza
-                  button.dispatchEvent(new CustomEvent('sessionstart'));
-             }
+            async function onSessionStarted( session ) {
+                session.addEventListener( 'end', onSessionEnded );
+                renderer.xr.setReferenceSpaceType( 'local' );
+                await renderer.xr.setSession( session );
+                button.textContent = 'STOP AR';
+                if (sessionInit.domOverlay) sessionInit.domOverlay.root.style.display = '';
 
-             function onSessionEnded( /*event*/ ) {
-                 currentSession.removeEventListener( 'end', onSessionEnded );
-                 button.textContent = 'START AR';
-                 if (sessionInit.domOverlay) sessionInit.domOverlay.root.style.display = 'none'; // Hide overlay
+                currentSession = session;
+                 // Disparar evento personalizado o llamar a una función cuando la sesión empieza
+                 button.dispatchEvent(new CustomEvent('sessionstart'));
+            }
 
-                 currentSession = null;
-                  // Disparar evento personalizado o llamar a una función cuando la sesión termina
-                  button.dispatchEvent(new CustomEvent('sessionend'));
-             }
+            function onSessionEnded( /*event*/ ) {
+                currentSession.removeEventListener( 'end', onSessionEnded );
+                button.textContent = 'START AR';
+                if (sessionInit.domOverlay) sessionInit.domOverlay.root.style.display = 'none';
 
-             button.style.display = '';
-             button.style.cursor = 'pointer';
-             button.textContent = 'START AR';
-             button.onclick = function () {
-                 if ( currentSession === null ) {
-                     navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted );
-                 } else {
-                     currentSession.end();
-                 }
-             };
+                currentSession = null;
+                 // Disparar evento personalizado o llamar a una función cuando la sesión termina
+                 button.dispatchEvent(new CustomEvent('sessionend'));
+            }
+
+            //
+
+            button.style.display = '';
+            button.style.cursor = 'pointer';
+            // button.style.left = 'calc(50% - 50px)'; // El CSS externo ya lo centra
+            // button.style.width = '100px'; // CSS externo controla tamaño si es necesario
+
+            button.textContent = 'START AR';
+
+            button.onmouseenter = function () {
+                // button.style.opacity = '1.0'; // Controlado por :hover CSS
+            };
+
+            button.onmouseleave = function () {
+               // button.style.opacity = '0.5'; // Controlado por :hover CSS
+            };
+
+            button.onclick = function () {
+                if ( currentSession === null ) {
+                    navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted );
+                } else {
+                    currentSession.end();
+                }
+            };
         }
 
         function disableButton() {
-            // ... (rest of disableButton)
             button.style.display = '';
             button.style.cursor = 'auto';
+            // button.style.left = 'calc(50% - 75px)'; // CSS externo
+            // button.style.width = '150px'; // CSS externo
+
             button.onmouseenter = null;
             button.onmouseleave = null;
+
             button.onclick = null;
         }
 
         function showARNotSupported() {
             disableButton();
             button.textContent = 'AR NOT SUPPORTED';
-             // ... (rest of showARNotSupported)
+             // Mostrar mensaje de error más claro
              const errorDiv = document.createElement('div');
-             errorDiv.className = 'ar-error-message'; // Use CSS for styling
+             errorDiv.className = 'ar-error-message';
              errorDiv.innerHTML = 'Tu navegador o dispositivo no soporta WebXR para Realidad Aumentada.<br/>Prueba con Chrome en un dispositivo Android compatible o un visor WebXR en iOS.';
              document.body.appendChild(errorDiv);
         }
@@ -147,19 +155,31 @@ class ARButton {
             disableButton();
             console.warn( 'Exception when trying to call xr.isSessionSupported', exception );
             button.textContent = 'AR NOT ALLOWED';
-             // ... (rest of showARNotAllowed)
-              const errorDiv = document.createElement('div');
-             errorDiv.className = 'ar-error-message'; // Use CSS for styling
+             // Mensaje de error si el usuario deniega permisos
+             const errorDiv = document.createElement('div');
+             errorDiv.className = 'ar-error-message';
              errorDiv.innerHTML = 'Permiso denegado para acceder a la Realidad Aumentada.<br/> Revisa los permisos de cámara y sensores de movimiento en la configuración de tu navegador.';
              document.body.appendChild(errorDiv);
         }
 
-        // stylizeElement function is not needed if using external CSS
+        function stylizeElement( element ) { // Ya no se usa mucho con CSS externo
+            // element.style.position = 'absolute';
+            // element.style.bottom = '20px';
+            // element.style.padding = '12px 6px';
+            // element.style.border = '1px solid #fff';
+            // element.style.borderRadius = '4px';
+            // element.style.background = 'rgba(0,0,0,0.1)';
+            // element.style.color = '#fff';
+            // element.style.font = 'normal 13px sans-serif';
+            // element.style.textAlign = 'center';
+            // element.style.opacity = '0.5';
+            // element.style.outline = 'none';
+            // element.style.zIndex = '999';
+        }
 
         if ( 'xr' in navigator ) {
             button.id = 'ARButton';
-            // Apply CSS class instead of inline styles if preferred
-            // button.classList.add('ar-button-style');
+            // stylizeElement( button ); // Dejar que CSS externo maneje esto
 
             navigator.xr.isSessionSupported( 'immersive-ar' ).then( function ( supported ) {
                 supported ? showStartAR() : showARNotSupported();
@@ -167,23 +187,19 @@ class ARButton {
 
             return button;
         } else {
-            // ... (rest of the 'else' block for WebXR not available)
             const message = document.createElement( 'a' );
             if ( window.isSecureContext === false ) {
                 message.href = document.location.href.replace( /^http:/, 'https:' );
-                message.innerHTML = 'WEBXR NEEDS HTTPS';
+                message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
             } else {
                 message.href = 'https://immersiveweb.dev/';
                 message.innerHTML = 'WEBXR NOT AVAILABLE';
             }
-            message.style.textDecoration = 'none';
-            message.classList.add('ar-error-message'); // Use CSS for styling
-            // Position it using CSS if possible
-            message.style.position = 'absolute';
             message.style.left = 'calc(50% - 90px)';
-            message.style.bottom = '20px';
             message.style.width = '180px';
-
+            message.style.textDecoration = 'none';
+            // stylizeElement( message ); // CSS externo
+             message.classList.add('ar-error-message'); // Usar estilo de error
 
             return message;
         }
@@ -195,12 +211,15 @@ class ARButton {
 // --- INICIO: Lógica de la aplicación AR ---
 let camera, scene, renderer;
 let controller;
-let reticle;
+let reticle; // El indicador visual
 let hitTestSource = null;
 let hitTestSourceRequested = false;
-let placedObject = null; // Reference to the loaded GLB model
-let mixer = null;       // Initialize mixer to null
-let clip = [];         // Store all animation clips
+let placedObject = null; // Referencia al cubo
+
+let mixer = "";
+let action = "";
+let clip = "";
+let animation1 = "";
 
 // --- GESTURE: State variables for touch interaction ---
 let isDragging = false;
@@ -212,27 +231,22 @@ const ROTATION_SPEED = 0.005; // Adjust sensitivity as needed
 // --- GESTURE: END ---
 
 init();
-// Animation is started by AR interactions or buttons
+// La animación se inicia/detiene por el botón AR
 
 function init() {
-    const container = document.createElement('div');
+    const container = document.createElement('div'); // Contenedor para el canvas
     document.body.appendChild(container);
 
     scene = new THREE.Scene();
 
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40); // Increased far plane
-
-    // --- Animation Setup ---
-    // Removed specific event listeners here, assuming buttons or other UI trigger doAnimation
-    // Add them back if specific DOM events are still needed for animations
-    // Example:
-    // document.addEventListener('open-trunk', function() {
-    //     if (mixer && clips.length > 4) doAnimation(4, clips[4], mixer);
-    // });
-    // ... other animation event listeners
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
     document.addEventListener('open-trunk', function() {
         doAnimation(4, clip[4], mixer);
+    });
+
+    document.addEventListener('close-trunk', function() {
+        stopAnimationActual(clip[4], mixer);
     });
 
     document.addEventListener('open_r_b_door', function() {
@@ -267,31 +281,66 @@ function init() {
         doAnimation(7, clip[7], mixer);
     });
 
-    function doAnimation(indexAnimation, animation, localMixer) {
-        if (!localMixer || !animation) {
-            console.warn("Mixer or animation not ready for index:", indexAnimation);
+    function doAnimation(indexAnimation, animation, localMixer) { // Renombrado mixer a localMixer para evitar confusión
+        if (!localMixer || !animation) { // Añadida comprobación para animation
+            console.warn("El mixer o la animación no están listos para el índice:", indexAnimation);
             return;
         }
+        // Intentar obtener la acción
         try {
-            const action = localMixer.clipAction(animation);
-            if (!action) {
-                console.warn("Could not create action for animation:", animation.name);
-                return;
-            }
-            action.reset();
-            action.setLoop(THREE.LoopOnce, 1);
-            action.clampWhenFinished = true;
-            // action.zeroSlopeAtEnd = true; // Can sometimes cause issues, test if needed
-            action.timeScale = 1; // Adjust speed if necessary
-            action.play();
-            console.log(`Playing animation: ${animation.name}`);
+             const action = localMixer.clipAction(animation);
+             if (!action) {
+                 console.warn("No se pudo crear la acción para la animación:", animation.name);
+                 return;
+             }
+             action.reset();
+             action.setLoop(THREE.LoopOnce, 1);
+             action.clampWhenFinished = true;
+             action.zeroSlopeAtEnd = true; // Considera si realmente necesitas esto
+             action.timeScale = 1; // O ajusta según necesites
+             action.play();
         } catch (error) {
-            console.error("Error playing animation:", indexAnimation, error);
+             console.error("Error al intentar reproducir la animación:", indexAnimation, error);
         }
     }
+    function stopAllAnimations(mixer) {
+        if (!mixer) {
+          console.warn("El modelo o el mixer aún no están listos");
+          return;
+        }
+        mixer._actions.forEach((action) => {
+          const clip = action.getClip();
+          handleStopAnimation(action, clip);
+        });
+      }
+
+      // 1) Defino la función globalmente
+      function stopAnimationActual(animation, mixer) {
+        if (!mixer) {
+          console.warn("El modelo o el mixer aún no están listos");
+          return;
+        }
+        const myAnimation = mixer.existingAction(animation);
+        if (myAnimation) {
+          const clip = action.getClip();
+          handleStopAnimation(myAnimation, clip);
+        }
+      }
+
+      function handleStopAnimation(animation, clip) {
+        animation.reset();
+        animation.clampWhenFinished = true;
+        animation.setLoop(THREE.LoopOnce, 0);
+        animation.timeScale = -action.timeScale; // invierte dirección
+        animation.time =
+          animation.timeScale < 0
+            ? clip.duration // si ahora va hacia atrás, empezar desde el final
+            : 0; // si va hacia adelante, desde el principio
+        animation.play();
+      }
 
     // --- Lights ---
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7)); // Slightly increased ambient light
+    scene.add(new THREE.AmbientLight(0xffffff, 1.4)); // Slightly increased ambient light
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Increased intensity
     directionalLight.position.set(1, 1.5, 1).normalize();
@@ -302,163 +351,116 @@ function init() {
     directionalLight2.position.set(-1, 1, -1).normalize();
     scene.add(directionalLight2);
 
-
-    // --- Renderer ---
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.xr.enabled = true;
+    renderer.xr.enabled = true; // Habilitar WebXR
     container.appendChild(renderer.domElement);
 
-    // --- AR Button ---
-    const arButtonContainer = document.getElementById('ar-button-container'); // Make sure this exists in your HTML
-     if (!arButtonContainer) {
-         console.warn("Element with ID 'ar-button-container' not found. Creating one.");
-         const defaultContainer = document.createElement('div');
-         defaultContainer.id = 'ar-button-container';
-         defaultContainer.style.position = 'absolute';
-         defaultContainer.style.bottom = '30px';
-         defaultContainer.style.width = '100%';
-         defaultContainer.style.textAlign = 'center';
-         defaultContainer.style.zIndex = '9999'; // Ensure it's above other elements
-         document.body.appendChild(defaultContainer);
-         arButtonContainer = defaultContainer;
-     }
-
-    const infoElement = document.getElementById('info'); // Make sure this exists in your HTML
-     if (!infoElement) {
-         console.warn("Element with ID 'info' not found. Creating one.");
-         const defaultInfo = document.createElement('div');
-         defaultInfo.id = 'info';
-         defaultInfo.textContent = 'Move phone to find a surface, then tap to place.';
-         defaultInfo.style.position = 'absolute';
-         defaultInfo.style.top = '10px';
-         defaultInfo.style.width = '100%';
-         defaultInfo.style.textAlign = 'center';
-         defaultInfo.style.color = 'white';
-         defaultInfo.style.backgroundColor = 'rgba(0,0,0,0.5)';
-         defaultInfo.style.padding = '10px';
-         defaultInfo.style.display = 'none'; // Initially hidden
-         defaultInfo.style.zIndex = '9998';
-         document.body.appendChild(defaultInfo);
-         infoElement = defaultInfo;
-     }
-
+    // --- Botón AR ---
+    const arButtonContainer = document.getElementById('ar-button-container');
+    const infoElement = document.getElementById('info');
 
     const button = ARButton.createButton(renderer, {
         requiredFeatures: ['hit-test', 'dom-overlay'], // Added dom-overlay
         domOverlay: { root: document.body } // Specify overlay root if needed by ARButton internals, check ARButton source if issue arises
     });
 
-    // Listener for specific animation button in the overlay (handled inside ARButton now)
+    // Set up a listener for our custom animation event
+    document.addEventListener('open-car-trunk', function() {
+        if (mixer && action) {
+            // Set button color to blue
+            button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul
+            // Reset to frame 0
+            action.reset();
+            // Only animate once
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            // Smooth slope at end
+            action.zeroSlopeAtEnd = true;
+            // Increase animation speed
+            action.timeScale = 5;
+            // Start animation
+            action.play();
+            console.log("Animation triggered via custom event");
+        } else {
+            console.warn("Mixer or action not available yet");
+        }
+    });
 
-    // AR Session Start/End UI handling
+    // Escuchar eventos personalizados del botón para manejar UI
     button.addEventListener('sessionstart', () => {
-        infoElement.style.display = 'block'; // Show instructions
-        if (placedObject) placedObject.visible = false; // Hide object when starting new session
-        reticle.visible = true; // Show reticle immediately
-    });
+         infoElement.style.display = 'block'; // Mostrar instrucciones al entrar en AR
+     });
     button.addEventListener('sessionend', () => {
-        infoElement.style.display = 'none';
-        if (placedObject) placedObject.visible = false; // Hide object on exit
-        reticle.visible = false;
-        hitTestSourceRequested = false;
-        hitTestSource = null;
-        // --- GESTURE: Reset interaction state on session end ---
-        isDragging = false;
-        isPinching = false;
-    });
+         // Limpiar al salir de AR
+         infoElement.style.display = 'none';
+         if (placedObject) placedObject.visible = false;
+         reticle.visible = false;
+         hitTestSourceRequested = false;
+         hitTestSource = null;
+         isDragging = false;
+         isPinching = false;
+     });
 
-    arButtonContainer.appendChild(button);
+    arButtonContainer.appendChild(button); // Añadir el botón al contenedor
 
-    // --- Controller (for initial placement tap) ---
+
+    // --- Controlador (para input de tap) ---
     controller = renderer.xr.getController(0);
-    controller.addEventListener('select', onSelect); // 'select' is the tap in AR
+    controller.addEventListener('select', onSelect); // 'select' es el tap en AR
     scene.add(controller);
 
-    // --- Reticle ---
+    // --- Retícula (Indicador visual) ---
     reticle = new THREE.Mesh(
-        new THREE.RingGeometry(0.08, 0.10, 32).rotateX(-Math.PI / 2), // Slightly larger reticle
-        new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true }) // More opaque
+        new THREE.RingGeometry(0.05, 0.07, 32).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.7, transparent: true })
     );
-    reticle.matrixAutoUpdate = false;
-    reticle.visible = false; // Initially hidden until session starts
+    reticle.matrixAutoUpdate = false; // La posición la controla el hit-test
+    reticle.visible = false; // Invisible hasta detectar superficie
     scene.add(reticle);
 
-    // --- Model Loading ---
-    // Use the URL from your example link: https://d2up16xgx6qr1.cloudfront.net/model/chair/FCA311.glb
-    // Or keep your 'oficial_3.glb' if that's the correct one you want to use.
-    // const modelUrl = 'https://d2up16xgx6qr1.cloudfront.net/model/chair/FCA311.glb';
-    const modelUrl = '3dmodel/oficial_3.glb'; // Sticking with your original path
-
     loader.load(
-        modelUrl,
+        '3dmodel/oficial_3.glb',
         function (gltf) {
-            console.log("GLB loaded successfully.");
             placedObject = gltf.scene;
-            placedObject.visible = false; // Keep it hidden initially
-
-            // --- GESTURE: Optional initial scaling ---
-            // Adjust if the model is too large or small by default
-            // placedObject.scale.set(0.5, 0.5, 0.5);
-
+            placedObject.visible = false;
             scene.add(placedObject);
 
-            // --- Animation Setup ---
-            if (placedObject.animations && placedObject.animations.length) {
-                console.log(`Found ${placedObject.animations.length} animations.`);
-                mixer = new THREE.AnimationMixer(placedObject);
-                clip = placedObject.animations; // Store all clips
+            // Scale the model to 10% of its original size
+            // placedObject.scale.set(0.1, 0.1, 0.1);
 
-                // Example: Log animation names
-                clip.forEach((clip, index) => console.log(`Animation ${index}: ${clip.name}`));
+            mixer = new THREE.AnimationMixer(placedObject);
 
-                // You might want to prepare actions or play a default idle animation here if needed
-                // mixer.clipAction(clips[0]).play(); // Example: Play the first animation immediately
+            animation1 = window.document.getElementById("animation1");
 
-            } else {
-                console.log("No animations found in the model.");
-            }
-
-             // Add mixer finished listener if needed
-             if(mixer) {
-                 mixer.addEventListener("finished", (e) => {
-                     console.log("Animation finished:", e.action.getClip().name);
-                 });
-             }
-
+            clip = gltf.animations;
+            
+            // 7) Cuando el mixer dispare el evento "finished"
+            mixer.addEventListener("finished", (e) => {
+                console.log("finished animating"); 
+            });
         },
-        (xhr) => { // Progress callback
-            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-        },
-        (error) => {
-            console.error("Error loading GLB:", error);
-            // Display error to user?
-            infoElement.textContent = "Error loading 3D model.";
-            infoElement.style.display = 'block';
-            infoElement.style.color = 'red';
+        undefined,
+        function (error) {
+        console.error("Error al cargar car.glb:", error);
         }
-    );
+);
 
-    // --- GESTURE: Add Touch Event Listeners to the Canvas ---
-    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false }); // passive: false to allow preventDefault
-    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
-    renderer.domElement.addEventListener('touchend', onTouchEnd);
+// Update the animation mixer inside the render loop
+// function animate() {
+//     if (mixer) {
+//         mixer.update(0.01); // Update animations by a small time step (you can tweak this)
+//     }
+// }
 
-
-    // --- Event Listeners & Render Loop ---
-    window.addEventListener('resize', onWindowResize);
-    renderer.setAnimationLoop(renderLoop); // Start the render loop
-}
-
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-// --- GESTURE: Touch Handlers ---
+function animate() {
+    //
+    if (mixer) {
+      mixer.update(0.01);
+    }
+  }
+  // --- GESTURE: Touch Handlers ---
 
 function onTouchStart(event) {
     // Only interact if the object is placed and visible
@@ -485,8 +487,7 @@ function onTouchStart(event) {
         event.preventDefault(); // Prevent browser zooming
     }
 }
-
-function onTouchMove(event) {
+  function onTouchMove(event) {
     if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
         return;
     }
@@ -514,96 +515,98 @@ function onTouchMove(event) {
         event.preventDefault();
     }
 }
-
-function onTouchEnd(event) {
-     if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
-        return;
-    }
-    // Reset flags when touches end
-    if (event.touches.length < 2) {
-        isPinching = false;
-    }
-    if (event.touches.length < 1) {
-        isDragging = false;
-    }
-}
-// --- GESTURE: END Touch Handlers ---
-
-// --- GESTURE: Modified onSelect for initial placement only ---
-function onSelect() {
-    // Only place the object if the reticle is visible AND the object hasn't been placed yet
-    if (reticle.visible && placedObject && !placedObject.visible) {
-        placedObject.position.setFromMatrixPosition(reticle.matrix);
-        // Optional: Align rotation with the surface normal (can look better)
-        // Get the hit pose
-        // const hitPose = frame.getHitTestResults(hitTestSource)[0]?.getPose(renderer.xr.getReferenceSpace());
-        // if (hitPose) {
-        //    placedObject.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(hitPose.transform.matrix));
-        //    // Optional: Keep upright if desired (remove X and Z rotation components)
-        //    const euler = new THREE.Euler().setFromQuaternion(placedObject.quaternion, 'YXZ');
-        //    placedObject.quaternion.setFromEuler(new THREE.Euler(0, euler.y, 0, 'YXZ'));
-        // }
-
-        placedObject.visible = true;
-        document.getElementById('info').style.display = 'none'; // Hide instructions
-
-        // Optional: Hide the reticle once an object is placed if you only want one object
-        // reticle.visible = false;
-    }
-    // Do NOT handle interaction logic here anymore. Touch handlers do that.
+  function onTouchEnd(event) {
+    if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
+       return;
+   }
+   // Reset flags when touches end
+   if (event.touches.length < 2) {
+       isPinching = false;
+   }
+   if (event.touches.length < 1) {
+       isDragging = false;
+   }
 }
 
-
-// Animation update function (called from render loop)
-const clock = new THREE.Clock(); // Use a clock for smoother animation updates
-function animate() {
-    const delta = clock.getDelta();
-    if (mixer) {
-        mixer.update(delta); // Update with time delta
-    }
-}
 
 function renderLoop(timestamp, frame) {
-    if (renderer.xr.isPresenting) {
-        animate(); // Update animations
-
-        if (frame) {
+    if (renderer.xr.isPresenting) { // Only process AR if the session is active
+        if (frame) { // The frame object only exists inside an XR session
             const referenceSpace = renderer.xr.getReferenceSpace();
             const session = renderer.xr.getSession();
 
-            // Hit-testing logic (only needed if object not placed OR if reticle should always show)
-            if (!placedObject || !placedObject.visible) { // Only do hit-testing before placement
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace('viewer').then(function (viewerSpace) {
-                       return session.requestHitTestSource({ space: viewerSpace });
-                     }).then(function (source) {
+            // Request hit-test source if we don't have it
+            if (hitTestSourceRequested === false) {
+                session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+                    session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
                         hitTestSource = source;
-                     }).catch(err => {
-                        console.error("Error requesting hit test source:", err);
-                         hitTestSourceRequested = false; // Allow retry?
-                     });
-                     hitTestSourceRequested = true;
-                }
+                    });
+                });
 
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-                    if (hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace);
-                        reticle.visible = true;
-                        reticle.matrix.fromArray(pose.transform.matrix);
-                    } else {
-                        reticle.visible = false;
-                    }
-                }
-            } else {
-                 // Object is placed, hide reticle (or keep it visible if desired)
-                 reticle.visible = false;
+                hitTestSourceRequested = true;
             }
 
+            // Get hit-test results
+            if (hitTestSource) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                if (hitTestResults.length > 0) {
+                    // Surface found
+                    const hit = hitTestResults[0];
+                    reticle.visible = true;
+                    // Update the position and orientation of the reticle
+                    reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+                } else {
+                    // No surface found
+                    reticle.visible = false;
+                }
+            }
         }
 
+        // Update animations in the render loop
+        animate();
+
+        // Render the scene
         renderer.render(scene, camera);
     }
-    // No rendering needed if not presenting AR
+}
+
+
+
+    // --- GESTURE: Add Touch Event Listeners to the Canvas ---
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false }); // passive: false to allow preventDefault
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+    renderer.domElement.addEventListener('touchend', onTouchEnd);
+    
+    // --- Eventos y Bucle de Renderizado ---
+    window.addEventListener('resize', onWindowResize);
+    renderer.setAnimationLoop(renderLoop); // Iniciar bucle
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onSelect(event) {
+    // Check if the event originated from our animation button and skip if so
+    // if (event.target && (event.target.id === 'animation1' || event.target.closest('#animation1'))) {
+    //     console.log('Ignoring onSelect because it came from animation button');
+    //     return;
+    // }
+    
+    // Se llama al tocar la pantalla en modo AR
+    if (reticle.visible && placedObject) {
+        // Colocar el cubo en la posición de la retícula
+        placedObject.position.setFromMatrixPosition(reticle.matrix);
+        // Opcional: Alinear la rotación (puede no ser necesario para un cubo)
+        // placedObject.quaternion.setFromRotationMatrix(reticle.matrix);
+        placedObject.visible = true; // Hacer visible el cubo
+        document.getElementById('info').style.display = 'none'; // Ocultar instrucciones
+
+        // Opcional: si solo quieres colocar UN objeto
+        // reticle.visible = false;
+        // controller.removeEventListener('select', onSelect); // Dejar de detectar taps
+    }
 }
