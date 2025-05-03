@@ -26,6 +26,9 @@ Route::get('/artest1', function () {
     return view('ar_experience/artest1');
 })->name('artest1');
 
+Route::get('/webdemo', function () {
+    return view('ar_experience/webdemo');
+})->name('webdemo');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
