@@ -23,17 +23,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Cambio entre Secciones del Panel ---
     function setActiveSection(targetId) {
+        console.log(`[setActiveSection] Intentando activar: ${targetId}`); // Log de entrada
+    
         // Ocultar todas las secciones y desactivar todas las pestañas
-        panelSections.forEach(section => section.classList.remove('active'));
+        panelSections.forEach(section => {
+            // *** AÑADIR ESTE LOG ***
+            console.log(`[setActiveSection] Removiendo 'active' de: ${section.id}`);
+            section.classList.remove('active');
+        });
         navTabs.forEach(tab => tab.classList.remove('active'));
-
+    
         // Activar la sección y pestaña objetivo
         const targetSection = document.getElementById(targetId);
         const targetTab = fabPanel.querySelector(`.panel-nav-tab[data-target="${targetId}"]`);
-
+    
         if (targetSection) {
+            // *** AÑADIR ESTE LOG ***
+            console.log(`[setActiveSection] Añadiendo 'active' a: ${targetSection.id}`);
             targetSection.classList.add('active');
-            console.log(`Sección activada: ${targetId}`);
+            // console.log(`Sección activada: ${targetId}`); // Log original
         } else {
             console.warn(`Sección objetivo no encontrada: ${targetId}`);
         }
@@ -41,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
             targetTab.classList.add('active');
         }
     }
-
     // --- Event Listeners ---
 
     // 1. Click en el FAB para mostrar/ocultar panel

@@ -54,11 +54,13 @@ export class ToolManager {
         const tool = this.tools.get(name);
         try {
             const result = await tool.execute(args);
-            return {
-                output: result,
-                id: id,
-                error: null
-            }
+            console.info(`Tool call result: ${name}`, { result });
+            return result;
+            // return {
+            //     output: result,
+            //     id: id,
+            //     error: null
+            // }
 
         } catch (error) {
             console.error(`Tool execution failed: ${name}`, error);

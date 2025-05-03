@@ -50,6 +50,7 @@ function playCarAnimation(index) {
     try {
         const action = mixer.clipAction(animation);
         action.reset().setLoop(THREE.LoopOnce, 1).clampWhenFinished = true;
+        handleStopAnimation(action, animation);
         // mixer.stopAllAction(); // Descomentar si quieres que cada animación detenga las anteriores
         action.play();
         console.log(`[playCarAnimation] Animación ${index} iniciada.`);
@@ -57,6 +58,20 @@ function playCarAnimation(index) {
         console.error(`[playCarAnimation] Error al reproducir animación ${index}:`, error);
     }
 }
+/*detiene la animacion */
+function handleStopAnimation(animation, clip) {
+        console.log(animation);
+        animation.reset();
+        animation.clampWhenFinished = true;
+        animation.setLoop(THREE.LoopOnce, 0);
+        animation.timeScale = -action.timeScale; // invierte dirección
+        animation.time =
+          animation.timeScale < 0
+            ? clip.duration // si ahora va hacia atrás, empezar desde el final
+            : 0; // si va hacia adelante, desde el principio
+        animation.play();
+      }
+
 
 /** Cambia a vista interior */
 function setInsideView() { // Ya no necesita argumentos, usa las variables globales del módulo
