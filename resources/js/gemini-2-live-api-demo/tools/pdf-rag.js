@@ -4,7 +4,8 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
-import * as fs from 'fs';
+// Remove fs import as it's not available in browsers
+import { arrayBufferToBase64 } from '/public/js/utils/utils.js';
 
 // Load environment variables
 const GEMINI_API_KEY = localStorage.getItem('apiKey');
@@ -45,8 +46,23 @@ export class PdfRagTool {
      * Fetches a PDF document and converts it to base64
      * @returns {Promise<string>} Base64-encoded PDF content
      */
-    fetchPdfAsBase64(pdfPath) {
-        return Buffer.from(fs.readFileSync(pdfPath)).toString("base64")
+    async fetchPdfAsBase64(pdfPath) {
+        try {
+            // Fetch the PDF file
+            const response = await fetch(pdfPath);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+            }
+            
+            // Get the array buffer from the response
+            const arrayBuffer = await response.arrayBuffer();
+            
+            // Convert the array buffer to base64 using our utility function
+            return arrayBufferToBase64(arrayBuffer);
+        } catch (error) {
+            console.error("Error fetching PDF:", error);
+            throw error;
+        }
     }
 
     /**
@@ -71,7 +87,7 @@ export class PdfRagTool {
             console.log(`Executing PDF search for query: ${query}`);
             
             // Initialize default PDF if none specified
-            const pdfPathToSearch = './../../../files/maual.pdf';
+            const pdfPathToSearch = '/files/manual.pdf'; // Updated path to use public directory
             
             // Fetch the PDF as base64
             const pdfBase64 = await this.fetchPdfAsBase64(pdfPathToSearch);

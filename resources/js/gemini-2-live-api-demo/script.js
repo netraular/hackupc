@@ -4,7 +4,8 @@ import { getConfig, getWebsocketUrl, getDeepgramApiKey, MODEL_SAMPLE_RATE } from
 import { GoogleSearchTool } from './tools/google-search.js';
 import { CarTrunkTool } from './tools/car-trunk.js';
 // import { PineconeRagTool } from './tools/pinecone-rag.js';
-import { PdfRagTool } from './tools/pdf-rag.js';
+// import { PdfRagTool } from './tools/pdf-rag.js';
+import { PdfRagTool } from './tools/n8n-rag.js';
 import { ToolManager } from './tools/tool-manager.js';
 import { ChatManager } from '/public/js/chat/chat-manager.js';
 

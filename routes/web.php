@@ -5,10 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ChatController; // Chat de texto
 use App\Http\Controllers\SttController;  // Nuevo para STT
 use App\Http\Controllers\TtsController;  // Nuevo para TTS
-
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+use App\Http\Controllers\CarExperienceController;
 
 // --- Rutas para el Chat (Solo Texto) ---
 Route::get('/chat', [ChatController::class, 'index'])->name('chat.index'); // Muestra la vista del chat de texto
@@ -26,10 +23,8 @@ Route::post('/tts-synthesize', [TtsController::class, 'synthesizeText'])->name('
 // --- Fin Rutas TTS ---
 
 
-// --- Ruta para version web ---
-Route::get('/web', function () {
-    return view('ar_experience/web');
-})->name('web');
+Route::get('/', [CarExperienceController::class, 'index'])->name('home');
+
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
