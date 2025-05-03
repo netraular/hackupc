@@ -18,19 +18,42 @@ export class PdfRagTool {
     getDeclaration() {
         return {
             name: "pdfSearch",
-            description: "Searches for information in the car manual, use this tool when the user asks a question about the car",
+            description: "Searches the car's user manual PDF to provide accurate, manual-based answers to user questions about the vehicle’s features, functions, and usage. Use this tool whenever a user asks how something works or how to operate, configure, or locate a component in the car. If the query also suggests an action (e.g., 'Open the trunk'), first respond with instructions from the manual, and then attempt to perform the action if system capabilities allow it.",
             parameters: {
                 type: "object",
                 properties: {
                     query: {
                         type: "string",
-                        description: "The question to answer from the PDF document(s)"
+                        description: "The user's question or request about using or understanding the car, requiring an answer based on the manual (e.g., 'How do I enable cruise control?')."
                     },
+                    context: {
+                        type: "string",
+                        description: "(Optional) Additional context about the user’s situation or car model to refine the search.",
+                        default: ""
+                    }
                 },
                 required: ["query"]
             }
         };
     }
+        
+    // getDeclaration() {
+    //     return {
+    //         name: "pdfSearch",
+    //         description: "Searches for information in the car manual, use this tool when the user asks a question about the car",
+    //         parameters: {
+    //             type: "object",
+    //             properties: {
+    //                 query: {
+    //                     type: "string",
+    //                     description: "The question to answer from the PDF document(s)"
+    //                 },
+    //             },
+    //             required: ["query"]
+    //         }
+    //     };
+    // }
+    
 
     /**
      * Executes the PDF search by sending PDF content directly to Gemini API

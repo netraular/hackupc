@@ -1,0 +1,280 @@
+/* --- Estilos Comunes (Popup y otros si los hubiera) --- */
+
+/* Overlay del Popup About Us */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: none; /* Inicialmente oculto, JS lo cambia a flex */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Contenido del Popup About Us */
+.popup-content {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+    max-width: 550px;
+    width: 95%;
+    position: relative;
+    text-align: left;
+    color: #333;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.popup-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+/* Botón de cerrar del Popup */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.close-button:hover {
+    color: #333;
+}
+
+/* Miembros del equipo en Popup */
+.team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.member-info:last-child {
+    border-bottom: none;
+}
+.github-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+.member-details {
+    flex-grow: 1;
+}
+.member-name {
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+    color: #444;
+}
+.member-website {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+.member-website:hover {
+    text-decoration: underline;
+}
+
+/* Botón "Sobre Nosotros" (posición absoluta) */
+#about-us-button {
+    padding: 8px 15px;
+    cursor: pointer;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin: 5px;
+    font-size: 14px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+#about-us-button:hover {
+    background-color: #5a6268;
+}
+
+/* Controles inferiores (animaciones, vista interior) */
+.controls-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 10;
+}
+.controls-container button {
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+.controls-container button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+.controls-container button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+#animation-buttons {
+    display: contents;
+}
+
+
+/* --- Estilos para el Floating Action Button (FAB) y Panel --- */
+
+/* Estilo base del FAB */
+.fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1050;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.fab:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* Estilo base del Panel FAB */
+.fab-panel {
+    position: fixed;
+    bottom: 95px;
+    right: 25px;
+    width: 300px;
+    max-height: 400px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    z-index: 1040;
+    overflow: hidden;
+    display: none; /* Oculto por JS */
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0.3s;
+}
+.fab-panel.active {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0s;
+}
+
+/* Navegación del Panel FAB */
+.panel-navigation {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+.panel-nav-tab {
+    flex: 1;
+    padding: 12px 10px;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+}
+.panel-nav-tab:hover {
+    background-color: #e9ecef;
+    color: #0056b3;
+}
+.panel-nav-tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    font-weight: 600;
+}
+
+/* Área de contenido del Panel FAB */
+.panel-content-area {
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+.panel-section {
+    display: none; /* Oculto por JS */
+}
+.panel-section.active {
+    display: block; /* Mostrado por JS */
+}
+.panel-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #343a40;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+.panel-section p {
+    margin-bottom: 15px;
+    font-size: 0.95em;
+    color: #495057;
+}
+
+/* Botones dentro del Panel FAB */
+.panel-button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.panel-button:hover {
+    background-color: #5a6268;
+}
+.panel-button:last-child {
+    margin-bottom: 0;
+}

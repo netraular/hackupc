@@ -227,16 +227,41 @@ function init() {
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
     document.addEventListener('open-trunk', function() {
-        doAnimation(0, clip[0], mixer);
+        doAnimation(4, clip[4], mixer);
     });
 
     document.addEventListener('open_r_b_door', function() {
-        doAnimation(1, clip[1], mixer);
+        doAnimation(3, clip[3], mixer);
     });
 
     document.addEventListener('open_l_b_door', function() {
         doAnimation(2, clip[2], mixer);
     });
+
+    document.addEventListener('open_l_f_door', function() {
+        doAnimation(0, clip[0], mixer);
+    });
+
+    document.addEventListener('open_r_f_door', function() {
+        doAnimation(1, clip[1], mixer);
+    });
+
+    document.addEventListener('open-charger', function() {
+        doAnimation(5, clip[5], mixer);
+    });
+
+    document.addEventListener('open-roof', function() {
+        doAnimation(6, clip[6], mixer);
+    });
+
+    document.addEventListener('open_l_wheels', function() {
+        doAnimation(8, clip[8], mixer);
+    });
+
+    document.addEventListener('open_r_wheels', function() {
+        doAnimation(7, clip[7], mixer);
+    });
+
     function doAnimation(indexAnimation, animation, localMixer) { // Renombrado mixer a localMixer para evitar confusión
         if (!localMixer || !animation) { // Añadida comprobación para animation
             console.warn("El mixer o la animación no están listos para el índice:", indexAnimation);
@@ -356,7 +381,7 @@ function init() {
             scene.add(placedObject);
 
             // Scale the model to 10% of its original size
-            placedObject.scale.set(0.1, 0.1, 0.1);
+            // placedObject.scale.set(0.1, 0.1, 0.1);
 
             mixer = new THREE.AnimationMixer(placedObject);
 
