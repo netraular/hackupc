@@ -316,7 +316,7 @@ function init() {
     scene.add(reticle);
 
     loader.load(
-        '3d/oficial.glb',
+        '3dmodel/oficial.glb',
         function (gltf) {
             placedObject = gltf.scene;
             placedObject.visible = false;
