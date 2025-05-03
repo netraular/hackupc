@@ -11,12 +11,12 @@
         <button id="disconnectBtn" class="disconnect-btn">Disconnect</button>
         <button id="connectBtn" class="connect-btn" style="display: none;">Connect</button>
         <button id="settingsBtn" class="settings-btn">⚙️</button>
-        <button id="cameraBtn" class="camera-btn">
+        <!-- <button id="cameraBtn" class="camera-btn">
             <span class="camera-icon">📷</span>
-        </button>
-        <button id="screenBtn" class="screen-btn">
+        </button> -->
+        <!-- <button id="screenBtn" class="screen-btn">
             <span class="screen-icon">🖥️</span>
-        </button>
+        </button> -->
         <button id="micBtn" class="mic-btn">
             <span class="mic-icon">🎤</span>
         </button>

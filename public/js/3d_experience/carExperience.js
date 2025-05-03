@@ -3,428 +3,244 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOExporter } from 'three/addons/exporters/DRACOExporter.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-// Variables específicas de la experiencia
+// Variables globales del módulo
 let carMesh = null;
 let mixer = null;
 let animations = [];
-let panelGroup = null;
-const textosInfoPanel = [ // Textos para el panel de información flotante
-    "¡Hola!", "Explora el coche", "Detalles del modelo", "Interacción", "Bienvenido",
-];
+let scene, camera, controls; // Referencias de Three.js
 
-// Referencias a los elementos de Three.js (se inicializarán en initCarExperience)
-let scene, camera, controls;
-
-/**
- * Carga el modelo GLB del coche, lo añade a la escena y configura el mixer.
- * @param {string} modelUrl - URL del archivo GLB.
- * @param {THREE.Scene} targetScene - Escena donde añadir el modelo.
- * @returns {Promise<object>} - Promesa que resuelve con { mesh, mixer, animations }
- */
+/** Carga el modelo GLB */
 function loadCarModel(modelUrl, targetScene) {
     return new Promise((resolve, reject) => {
         const loader = new GLTFLoader();
-        loader.load(
-            modelUrl,
-            (gltf) => {
-                carMesh = gltf.scene; // Guarda la referencia al mesh principal
-                scene = targetScene; // Guarda referencia a la escena
-
-                // Configura sombras para todos los meshes dentro del modelo
-                carMesh.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-
-                carMesh.position.y = 0; // Ajusta la posición vertical si es necesario
-                scene.add(carMesh);
-
-                animations = gltf.animations || []; // Guarda las animaciones
-                if (animations.length > 0) {
-                    mixer = new THREE.AnimationMixer(carMesh); // Crea el mixer si hay animaciones
-                } else {
-                    mixer = null;
-                    console.warn("Modelo cargado sin animaciones.");
-                }
-
-
-                console.log(`Modelo cargado: ${modelUrl}, ${animations.length} animaciones encontradas.`);
-                resolve({ mesh: carMesh, mixer, animations }); // Resuelve la promesa con los datos
-            },
-            undefined, // Callback de progreso (opcional)
-            (error) => {
-                console.error('Error cargando el modelo GLB:', error);
-                reject(error); // Rechaza la promesa en caso de error
-            }
-        );
+        loader.load(modelUrl, (gltf) => {
+            carMesh = gltf.scene;
+            scene = targetScene; // Guardar referencia de la escena globalmente
+            carMesh.traverse((child) => {
+                if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+            });
+            carMesh.position.y = 0;
+            scene.add(carMesh);
+            animations = gltf.animations || [];
+            mixer = animations.length > 0 ? new THREE.AnimationMixer(carMesh) : null;
+            console.log(`Modelo cargado: ${modelUrl}, ${animations.length} animaciones encontradas.`);
+            if (!mixer) console.warn("Modelo sin animaciones, mixer no creado.");
+            resolve({ mesh: carMesh, mixer, animations }); // Resolvemos con los datos importantes
+        }, undefined, (error) => {
+            console.error('Error cargando modelo GLB:', error);
+            reject(error);
+        });
     });
 }
 
-/**
- * Reproduce una animación específica por su índice.
- * @param {number} index - Índice de la animación en el array 'animations'.
- */
+/** Reproduce una animación por índice */
 function playCarAnimation(index) {
-    if (!mixer) {
-        console.warn("Mixer no inicializado, no se puede reproducir animación.");
+    if (!mixer) { console.warn("[playCarAnimation] Mixer no disponible."); return; }
+    // Comprobamos si el array de animaciones existe y tiene el índice solicitado
+    if (!animations || index < 0 || index >= animations.length) {
+        console.warn(`[playCarAnimation] Animación con índice ${index} no encontrada o fuera de rango.`);
         return;
     }
-    if (!animations[index]) {
-        console.warn(`Animación con índice ${index} no encontrada.`);
-        return;
-    }
-
     const animation = animations[index];
-    console.log(`Intentando reproducir animación: ${animation.name} (índice ${index})`);
-
+    if (!animation) { // Doble check por si hay un hueco en el array
+        console.warn(`[playCarAnimation] El objeto de animación en el índice ${index} es inválido.`);
+        return;
+    }
+    console.log(`[playCarAnimation] Reproduciendo: ${animation.name || `Animación ${index}`} (índice ${index})`);
     try {
         const action = mixer.clipAction(animation);
-        if (!action) {
-             console.error(`No se pudo crear la acción para la animación ${index}.`);
-             return;
-        }
-
-        // Detener otras acciones para evitar solapamientos (opcional, depende del efecto deseado)
-        // mixer.stopAllAction();
-
-        // Configurar y reproducir la acción
-        action.reset()
-            .setLoop(THREE.LoopOnce, 1) // Reproducir una sola vez
-            .clampWhenFinished = true; // Mantener el estado final
+        action.reset().setLoop(THREE.LoopOnce, 1).clampWhenFinished = true;
+        // mixer.stopAllAction(); // Descomentar si quieres que cada animación detenga las anteriores
         action.play();
-
+        console.log(`[playCarAnimation] Animación ${index} iniciada.`);
     } catch (error) {
-        console.error(`Error al intentar reproducir animación ${index}:`, error);
+        console.error(`[playCarAnimation] Error al reproducir animación ${index}:`, error);
     }
 }
 
-/**
- * Muestra un panel informativo flotante con texto aleatorio e imagen frente a la cámara.
- * @param {string} panelImageUrl - URL de la imagen a mostrar.
- * @param {THREE.Camera} currentCamera - Cámara actual para calcular la posición.
- */
-function showInfoPanel(panelImageUrl, currentCamera) {
-    if (!scene || !currentCamera) {
-        console.warn("Escena o cámara no disponibles para mostrar el panel de información.");
+/** Cambia a vista interior */
+function setInsideView() { // Ya no necesita argumentos, usa las variables globales del módulo
+    if (!carMesh || !controls || !camera) {
+        console.warn("[setInsideView] Faltan elementos globales: carMesh, controls o camera.");
         return;
     }
-    camera = currentCamera; // Actualizar referencia
+    const insidePositionRelative = new THREE.Vector3(0.3, 1.1, -0.2); // Ajustar según tu modelo
+    const lookAtTargetRelative = new THREE.Vector3(0, 1, 5);       // Ajustar según tu modelo
 
-    // Eliminar panel anterior si existe (limpiando recursos)
-    if (panelGroup) {
-        scene.remove(panelGroup);
-        panelGroup.traverse(obj => {
-            if (obj.geometry) obj.geometry.dispose();
-            if (obj.material) {
-                if (obj.material.map) obj.material.map.dispose();
-                obj.material.dispose();
-            }
-        });
-        panelGroup = null; // Asegurarse de limpiar la referencia
-    }
+    // Es importante clonar los vectores para no modificar los originales
+    const worldPosition = carMesh.localToWorld(insidePositionRelative.clone());
+    const worldTarget = carMesh.localToWorld(lookAtTargetRelative.clone());
 
-    panelGroup = new THREE.Group(); // Crear nuevo grupo para el panel
-
-    // --- Crear Texto con Canvas ---
-    const txt = textosInfoPanel[Math.floor(Math.random() * textosInfoPanel.length)];
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const canvasWidth = 512, canvasHeight = 128;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    ctx.fillStyle = '#333'; // Fondo oscuro
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    ctx.font = 'bold 40px sans-serif';
-    ctx.fillStyle = 'white'; // Texto blanco
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(txt, canvasWidth / 2, canvasHeight / 2);
-    const textTexture = new THREE.CanvasTexture(canvas);
-    const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true, side: THREE.DoubleSide });
-    const textGeometry = new THREE.PlaneGeometry(2, 0.5); // Ajustar tamaño si es necesario
-    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-    textMesh.position.y = 0.7; // Posicionar texto encima de la imagen
-    panelGroup.add(textMesh);
-
-    // --- Cargar y añadir Imagen ---
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load(panelImageUrl,
-        (imgTexture) => { // Success Callback
-            const imgAspect = imgTexture.image.width / imgTexture.image.height;
-            const imgHeight = 1.5;
-            const imgWidth = imgHeight * imgAspect;
-            const imgGeometry = new THREE.PlaneGeometry(imgWidth, imgHeight);
-            const imgMaterial = new THREE.MeshBasicMaterial({ map: imgTexture, side: THREE.DoubleSide });
-            const imgMesh = new THREE.Mesh(imgGeometry, imgMaterial);
-            imgMesh.position.y = -0.3; // Posicionar imagen debajo del texto
-            panelGroup.add(imgMesh);
-
-            // Posicionar el grupo completo solo después de cargar la imagen
-            positionAndAddPanel();
-        },
-        undefined, // Progress Callback (opcional)
-        (err) => { // Error Callback
-            console.error("Error cargando imagen del panel:", err);
-            // Igualmente posicionar (mostrará solo el texto)
-            positionAndAddPanel();
-        }
-    );
-
-    // --- Función interna para posicionar el panel ---
-    function positionAndAddPanel() {
-        if (!panelGroup) return; // Seguridad
-        const distance = 3; // Distancia del panel a la cámara
-        const targetPosition = new THREE.Vector3();
-        // Obtener la dirección en la que mira la cámara
-        camera.getWorldDirection(targetPosition);
-        // Mover el punto a 'distance' unidades en esa dirección desde la cámara
-        targetPosition.multiplyScalar(distance).add(camera.position);
-
-        panelGroup.position.copy(targetPosition);
-        panelGroup.lookAt(camera.position); // Hacer que el panel mire siempre a la cámara
-        scene.add(panelGroup);
-        // console.log("Panel de información mostrado/actualizado."); // Puede ser útil para depurar
-    }
+    camera.position.copy(worldPosition);
+    controls.target.copy(worldTarget);
+    controls.update(); // Muy importante para aplicar los cambios
+    console.log("[setInsideView] Vista interior activada.");
 }
 
-/**
- * Cambia la cámara a una posición predefinida 'dentro' del coche.
- * @param {THREE.Camera} currentCamera - La cámara a mover.
- * @param {THREE.OrbitControls} currentControls - Los controles orbitales.
- * @param {THREE.Object3D} targetMesh - El mesh del coche (o un objeto de referencia).
- */
-function setInsideView(currentCamera, currentControls, targetMesh) {
-    if (!targetMesh || !currentControls || !currentCamera) {
-        console.warn("Faltan elementos (cámara, controles o mesh) para la vista interior.");
-        return;
-    }
-    // --- Define la posición y el punto de mira RELATIVOS al coche ---
-    // Ajusta estos valores según tu modelo y el efecto deseado
-    const insidePositionRelative = new THREE.Vector3(0.3, 1.1, -0.2); // Ejemplo: asiento del conductor
-    const lookAtTargetRelative = new THREE.Vector3(0, 1, 5); // Ejemplo: mirar hacia adelante
-
-    // Convertir coordenadas relativas a coordenadas del mundo
-    const worldPosition = targetMesh.localToWorld(insidePositionRelative.clone());
-    const worldTarget = targetMesh.localToWorld(lookAtTargetRelative.clone());
-
-    // Mover la cámara y actualizar el objetivo de los controles
-    currentCamera.position.copy(worldPosition);
-    currentControls.target.copy(worldTarget);
-    currentControls.update(); // ¡Importante! Aplica los cambios de target/position
-    console.log("Cámara movida a vista interior.");
-}
-
-/**
- * Configura los listeners para TODOS los botones interactivos (originales y panel FAB).
- * @param {THREE.Camera} currentCamera - La cámara.
- * @param {THREE.OrbitControls} currentControls - Los controles orbitales.
- * @param {string} panelImageUrl - URL de la imagen para el panel de información.
- */
-function setupUIListeners(currentCamera, currentControls, panelImageUrl) {
-    // Guardar referencias globales para este módulo si es necesario
-    // (ya deberían estar seteadas por initCarExperience)
+/** Configura listeners para los botones del PANEL FAB */
+function setupUIListeners(currentCamera, currentControls) {
+    // Guardar referencias globales
     camera = currentCamera;
     controls = currentControls;
 
-    // --- 1. Botones de Animación ORIGINALES (en .controls-container) ---
-    document.querySelectorAll('.controls-container .animation').forEach(btn => {
-        const animIndex = parseInt(btn.dataset.animation, 10);
+    console.log("[setupUIListeners] Configurando listeners para controles del panel FAB...");
 
-        // Habilitar/Deshabilitar botón según si la animación existe
-        if (animations && animations[animIndex]) {
-            btn.disabled = false;
-            btn.addEventListener('click', () => {
-                if (carMesh) {
-                    // showInfoPanel(panelImageUrl, currentCamera); // Opcional: mostrar panel de info
-                    playCarAnimation(animIndex);
-                } else {
-                    console.warn("Botón animación original pulsado, pero carMesh no está listo.");
-                }
-            });
-        } else {
-            console.warn(`Animación original ${animIndex} no encontrada, botón deshabilitado.`);
-            btn.disabled = true;
-        }
-    });
+    // --- 1. Botones de Animación del PANEL FAB ---
+    const fabAnimSelector = '#panel-section-test .panel-button[data-panel-animation]';
+    const fabAnimationButtons = document.querySelectorAll(fabAnimSelector);
+    console.log(`[setupUIListeners] Botones de animación FAB encontrados: ${fabAnimationButtons.length}`);
 
-    // --- 2. Botón Vista Interior ORIGINAL (en .controls-container) ---
-    const originalInsideBtn = document.getElementById('insideCameraBtn');
-    if (originalInsideBtn) {
-        originalInsideBtn.addEventListener('click', () => {
-            setInsideView(currentCamera, currentControls, carMesh); // Llama a la función reutilizable
-        });
-    } else {
-        console.warn("Botón original 'insideCameraBtn' no encontrado.");
-    }
-
-    // --- 3. Botones de Animación del PANEL FAB ---
-    const fabAnimationButtons = document.querySelectorAll('#panel-section-test .panel-button[data-panel-animation]');
     fabAnimationButtons.forEach(btn => {
+        // El botón empieza 'disabled' desde el HTML
         const animIndex = parseInt(btn.dataset.panelAnimation, 10);
 
-        // Habilitar/Deshabilitar según existencia de animación
-        if (animations && animations[animIndex]) {
-            btn.disabled = false; // Asegurarse que no esté deshabilitado por defecto
+        if (isNaN(animIndex)) {
+            console.warn(`[setupUIListeners] Botón FAB con data-panel-animation inválido, permanecerá deshabilitado:`, btn);
+            // Ya está disabled por HTML, opcionalmente reforzar estilos:
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            return;
+        }
+
+        // Comprueba si la animación existe en el array cargado
+        if (animations && animIndex >= 0 && animIndex < animations.length && animations[animIndex]) {
+            // La animación EXISTE -> HABILITAR el botón
+            console.log(`[setupUIListeners] Habilitando botón FAB Anim ${animIndex}`);
+            btn.disabled = false; // *** QUITAR el atributo disabled ***
+            // Aplicar estilos de habilitado (puede ser redundante si :disabled CSS funciona bien)
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
 
-            btn.addEventListener('click', () => {
-                if (carMesh) {
-                    showInfoPanel(panelImageUrl, currentCamera); // Mostrar panel de info también
-                    playCarAnimation(animIndex);
-                    // Opcional: Cerrar el panel FAB después de la acción
-                    // document.getElementById('fab-action-panel')?.classList.remove('active');
-                    // const fabButtonIcon = document.querySelector('#fab-toggle-button i');
-                    // if(fabButtonIcon) {
-                    //     fabButtonIcon.classList.remove('fa-times');
-                    //     fabButtonIcon.classList.add('fa-plus');
-                    // }
-                } else {
-                    console.warn(`Botón animación panel (${animIndex}) pulsado, pero carMesh no está listo.`);
-                }
-            });
+            // Añadir el listener (limpiar antes por si acaso)
+            const handler = () => {
+                 console.log(`%c[FAB Click] Botón Animación ${animIndex} pulsado!`, 'color: blue; font-weight: bold;');
+                 if (carMesh && mixer) {
+                     playCarAnimation(animIndex);
+                 } else {
+                      console.warn(`[FAB Click] No se puede reproducir Anim ${animIndex}: carMesh o mixer no listos.`);
+                 }
+            };
+            btn.removeEventListener('click', handler);
+            btn.addEventListener('click', handler);
+
         } else {
-            console.warn(`Animación ${animIndex} no encontrada para el botón del panel.`);
-            btn.disabled = true; // Deshabilitar si no existe
-            btn.style.opacity = '0.6';
+            // La animación NO EXISTE -> DEJAR DESHABILITADO
+            console.warn(`[setupUIListeners] Animación ${animIndex} no encontrada. Botón FAB permanecerá deshabilitado.`);
+            // Asegurarse de que sigue deshabilitado (ya debería estarlo por HTML)
+            btn.disabled = true;
+            // Aplicar/reforzar estilos de deshabilitado (redundante si CSS :disabled funciona)
+            btn.style.opacity = '0.5';
             btn.style.cursor = 'not-allowed';
+            // No añadir listener si está deshabilitado
         }
     });
 
-    // --- 4. Botón de Vista Interior del PANEL FAB ---
-    const panelInsideBtn = document.querySelector('#panel-section-test .panel-button[data-panel-action="insideView"]');
+    // --- 2. Botón de Vista Interior del PANEL FAB ---
+    const fabInsideSelector = '#panel-section-test .panel-button[data-panel-action="insideView"]';
+    const panelInsideBtn = document.querySelector(fabInsideSelector);
+
     if (panelInsideBtn) {
-        panelInsideBtn.addEventListener('click', () => {
-            setInsideView(currentCamera, currentControls, carMesh); // Llama a la función reutilizable
-             // Opcional: Cerrar el panel FAB después de la acción
-             // document.getElementById('fab-action-panel')?.classList.remove('active');
-             // const fabButtonIcon = document.querySelector('#fab-toggle-button i');
-             // if(fabButtonIcon) {
-             //     fabButtonIcon.classList.remove('fa-times');
-             //     fabButtonIcon.classList.add('fa-plus');
-             // }
-        });
-    } else {
-        console.warn("Botón de vista interior del panel no encontrado (selector: #panel-section-test .panel-button[data-panel-action='insideView']).");
-    }
+        // Este botón depende solo de que el modelo (carMesh) esté cargado.
+        // Como setupUIListeners se llama DESPUÉS de loadCarModel, podemos habilitarlo.
+        console.log(`[setupUIListeners] Habilitando botón FAB vista interior.`);
+        panelInsideBtn.disabled = false; // *** QUITAR el atributo disabled ***
+        // Aplicar estilos de habilitado
+        panelInsideBtn.style.opacity = '1';
+        panelInsideBtn.style.cursor = 'pointer';
 
-    console.log("Listeners de UI (originales y panel FAB) configurados/actualizados.");
-}
-
-/** Función para exportar el modelo cargado a formato Draco (.drc) */
-function exportToDraco() {
-    if (!carMesh) {
-        alert("El modelo no está cargado para exportar.");
-        console.warn("Intento de exportar sin modelo cargado.");
-        return;
-    }
-
-    const exporter = new DRACOExporter();
-    const link = document.createElement('a'); // Enlace temporal para descarga
-    link.style.display = 'none';
-    document.body.appendChild(link); // Necesario para poder simular el clic
-
-    // Función auxiliar para guardar ArrayBuffer
-    function saveArrayBuffer(buffer, filename) {
-        const blob = new Blob([buffer], { type: 'application/octet-stream' });
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click(); // Simula clic para descargar
-        URL.revokeObjectURL(link.href); // Libera memoria
-    }
-
-    try {
-        console.log("Iniciando exportación a Draco...");
-        const options = {
-            dracoOptions: { compressionLevel: 5 } // Ajusta nivel de compresión (0-10)
+        // Añadir listener (limpiar antes)
+        const handler = () => {
+             console.log("%c[FAB Click] Botón Vista Interior pulsado!", 'color: purple; font-weight: bold;');
+             if (carMesh && controls && camera) {
+                 setInsideView(); // Usa variables globales
+             } else {
+                 console.warn("[FAB Click] No se puede activar vista interior: faltan carMesh, controls o camera.");
+             }
         };
-        const result = exporter.parse(carMesh, options); // Exporta el mesh cargado
-        if (result) {
-            saveArrayBuffer(result, 'car_model_exported.drc'); // Nombre del archivo descargado
-            console.log("Exportación a Draco completada.");
-        } else {
-            throw new Error("La exportación no produjo resultados.");
-        }
-    } catch (error) {
-        console.error("Error durante la exportación a Draco:", error);
-        alert("Error al exportar el modelo: " + error.message);
-    } finally {
-        document.body.removeChild(link); // Elimina el enlace temporal del DOM
+        panelInsideBtn.removeEventListener('click', handler);
+        panelInsideBtn.addEventListener('click', handler);
+
+    } else {
+        console.warn("[setupUIListeners] Botón FAB vista interior NO encontrado.");
+        // No hay nada que hacer si no se encuentra
     }
+
+    console.log("[setupUIListeners] Configuración de listeners del FAB finalizada.");
 }
 
-/** Configura y muestra el panel de GUI (lil-gui) para la exportación */
-function setupGUI() {
-    // Evitar crear múltiples GUIs si se llama varias veces
-    if (document.querySelector('.lil-gui')) {
-        return;
-    }
-    const gui = new GUI();
-    const params = {
-        export: exportToDraco // Llama a la función de exportación al hacer clic
+
+/** Exportar a Draco */
+function exportToDraco() {
+    if (!carMesh) { console.warn("No hay modelo cargado para exportar."); return; }
+    const exporter = new DRACOExporter();
+    const options = {
+        decodeSpeed: 5,
+        encodeSpeed: 5,
+        encoderMethod: DRACOExporter.MESH_EDGEBREAKER_ENCODING,
+        quantization: [16, 8, 8, 8, 8],
+        exportUvs: true,
+        exportNormals: true,
+        exportColor: false
     };
-    gui.add(params, 'export').name('Exportar DRC');
-    console.log("Panel lil-gui configurado.");
-    // gui.open(); // Descomentar si quieres que el panel GUI esté abierto por defecto
+    console.log("Iniciando exportación a Draco...");
+    const result = exporter.parse(carMesh, options);
+    // Crear un enlace para descargar (ejemplo)
+    const blob = new Blob([result], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'coche_exportado.drc';
+    link.click();
+    console.log("Exportación a Draco finalizada y descarga iniciada.");
+    URL.revokeObjectURL(link.href); // Limpiar URL del objeto
 }
 
+/** Configura lil-gui (Opcional) */
+function setupGUI() {
+    const gui = new GUI({ title: 'Controles de Depuración' });
+    const params = { exportDraco: exportToDraco };
+    gui.add(params, 'exportDraco').name('Exportar a Draco');
+    // Puedes añadir más controles GUI aquí si los necesitas para depurar
+    console.log("[setupGUI] GUI de depuración configurada.");
+}
 
-/**
- * Función principal de inicialización para la experiencia del coche.
- * Carga el modelo, configura listeners y GUI.
- * @param {object} threeElements - Objeto con { scene, camera, controls } de initThree.
- * @param {string} modelUrl - URL del modelo GLB.
- * @param {string} panelImageUrl - URL de la imagen del panel informativo.
- */
-async function initCarExperience(threeElements, modelUrl, panelImageUrl) {
-    // Guarda las referencias de Three.js necesarias para este módulo
+/** Función principal de inicialización */
+async function initCarExperience(threeElements, modelUrl, panelImageUrl) { // panelImageUrl ya no se usa
     scene = threeElements.scene;
     camera = threeElements.camera;
     controls = threeElements.controls;
 
-    console.log("Iniciando carga de la experiencia del coche...");
-
+    console.log("[initCarExperience] Iniciando...");
+    if (!scene || !camera || !controls || !modelUrl) {
+        throw new Error("[initCarExperience] Faltan elementos esenciales.");
+    }
     try {
-        // Carga el modelo y espera a que termine
-        const { mesh, mixer: loadedMixer, animations: loadedAnimations } = await loadCarModel(modelUrl, scene);
-        // Las variables carMesh, mixer, animations ya se actualizaron dentro de loadCarModel
+        console.log("[initCarExperience] Cargando modelo...");
+        // ****** LA CARGA OCURRE AQUÍ ******
+        await loadCarModel(modelUrl, scene);
+        // ****** MODELO CARGADO, 'animations' YA TIENE DATOS ******
 
-        // Configura los listeners de la UI AHORA que el modelo (y sus animaciones) están cargados
-        setupUIListeners(camera, controls, panelImageUrl);
+        console.log("[initCarExperience] Modelo cargado. Configurando listeners UI (SOLO FAB)...");
+        // ****** SETUPUILISTENERS SE LLAMA DESPUÉS DE LA CARGA ******
+        setupUIListeners(camera, controls); // Ahora habilitará/deshabilitará correctamente
 
-        // Configura el panel de GUI para exportar
+        console.log("[initCarExperience] Configurando GUI (opcional)...");
         setupGUI();
 
-        console.log("Experiencia del coche inicializada correctamente.");
-
+        console.log("[initCarExperience] Inicialización completada exitosamente.");
     } catch (error) {
-        console.error("Fallo CRÍTICO al inicializar la experiencia del coche:", error);
-        // Aquí podrías mostrar un mensaje de error más visible al usuario en la propia página
-        const errorDiv = document.body.querySelector('#init-error-msg');
-        if (errorDiv) {
-             errorDiv.textContent = "Error al cargar el modelo 3D.";
-             errorDiv.style.display = 'block';
-        }
+        console.error("[initCarExperience] Fallo CRÍTICO:", error);
+        throw error;
     }
 }
 
-/**
- * Función de actualización que se llama en cada frame del bucle de animación.
- * @param {number} delta - Tiempo (en segundos) transcurrido desde el último frame.
- */
+
+/** Función de actualización (bucle) */
 function updateCarExperience(delta) {
-    // Actualizar el mixer de animación es lo más importante aquí
     if (mixer) {
-        mixer.update(delta); // Avanza las animaciones
+        mixer.update(delta); // Actualizar el mixer de animación si existe
     }
-
-    // Aquí podrías añadir otras lógicas que necesiten actualizarse en cada frame,
-    // como la lógica de un juego, físicas simples, etc.
+    // No es necesario actualizar controls aquí si OrbitControls está en threeSetup.js
 }
 
-
-// Exporta las funciones que necesitan ser llamadas desde fuera de este módulo
-// (principalmente desde el script orquestador en web.blade.php)
+// Exportar funciones públicas
 export { initCarExperience, updateCarExperience };

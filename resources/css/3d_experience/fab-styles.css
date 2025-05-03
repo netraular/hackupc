@@ -1,4 +1,6 @@
-/* --- Estilos Comunes (Popup y otros si los hubiera) --- */
+/* ============================================================ */
+/*        Estilos para Popup "Sobre Nosotros" y Botón         */
+/* ============================================================ */
 
 /* Overlay del Popup About Us */
 .popup-overlay {
@@ -109,54 +111,23 @@
     border-radius: 5px;
     margin: 5px;
     font-size: 14px;
-    position: absolute;
+    position: absolute; /* Cambiado de fixed a absolute */
     top: 10px;
     left: 10px;
-    z-index: 10;
+    z-index: 10; /* Menor que el FAB y el Popup */
 }
 #about-us-button:hover {
     background-color: #5a6268;
 }
 
-/* Controles inferiores (animaciones, vista interior) */
-.controls-container {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    border-radius: 8px;
-    z-index: 10;
-}
-.controls-container button {
-    padding: 8px 12px;
-    cursor: pointer;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-}
-.controls-container button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-.controls-container button:hover:not(:disabled) {
-    background-color: #45a049;
-}
-#animation-buttons {
-    display: contents;
-}
 
+/* ============================================================ */
+/*       Estilos para Floating Action Button (FAB) y Panel    */
+/* ============================================================ */
 
-/* --- Estilos para el Floating Action Button (FAB) y Panel --- */
-
-/* Estilo base del FAB */
+/* Estilo base del FAB (Botón flotante principal) */
 .fab {
-    position: fixed;
+    position: fixed; /* Fijo en la ventana */
     bottom: 25px;
     right: 25px;
     width: 60px;
@@ -171,7 +142,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 1050;
+    z-index: 1050; /* Por encima de otros elementos */
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 .fab:hover {
@@ -179,39 +150,41 @@
     transform: scale(1.05);
 }
 
-/* Estilo base del Panel FAB */
+/* Estilo base del Panel FAB (Contenedor que se despliega) */
 .fab-panel {
-    position: fixed;
-    bottom: 95px;
+    position: fixed; /* Fijo en la ventana */
+    bottom: 95px; /* Encima del FAB */
     right: 25px;
     width: 300px;
-    max-height: 400px;
+    max-height: 400px; /* Límite de altura */
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-    z-index: 1040;
-    overflow: hidden;
-    display: none; /* Oculto por JS */
+    z-index: 1040; /* Ligeramente debajo del FAB principal */
+    overflow: hidden; /* Contiene los elementos hijos */
+    display: none; /* Oculto por defecto, JS lo muestra */
     flex-direction: column;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px); /* Efecto de aparición desde abajo */
+    /* Transiciones para la aparición/desaparición */
     transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0.3s;
 }
+/* Estado activo del panel, mostrado por JS */
 .fab-panel.active {
-    display: flex;
+    display: flex; /* Cambia a flex para mostrar contenido */
     opacity: 1;
     transform: translateY(0);
     transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0s;
 }
 
-/* Navegación del Panel FAB */
+/* Navegación por pestañas dentro del Panel FAB */
 .panel-navigation {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Fondo ligeramente gris */
 }
 .panel-nav-tab {
-    flex: 1;
+    flex: 1; /* Ocupa espacio equitativo */
     padding: 12px 10px;
     text-align: center;
     background: none;
@@ -219,31 +192,32 @@
     cursor: pointer;
     font-weight: 500;
     color: #495057;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-bottom-color 0.2s ease;
+    border-bottom: 3px solid transparent; /* Borde inferior para indicar activo */
+    margin-bottom: -1px; /* Compensa el borde de .panel-navigation */
 }
 .panel-nav-tab:hover {
     background-color: #e9ecef;
     color: #0056b3;
 }
 .panel-nav-tab.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    color: #007bff; /* Color de pestaña activa */
+    border-bottom-color: #007bff; /* Borde inferior visible */
     font-weight: 600;
 }
 
-/* Área de contenido del Panel FAB */
+/* Área donde se muestra el contenido de la pestaña activa */
 .panel-content-area {
     padding: 15px 20px;
-    overflow-y: auto;
-    flex-grow: 1;
+    overflow-y: auto; /* Scroll si el contenido excede max-height */
+    flex-grow: 1; /* Ocupa el espacio restante en el panel */
 }
+/* Secciones de contenido (una por pestaña) */
 .panel-section {
-    display: none; /* Oculto por JS */
+    display: none; /* Ocultas por defecto */
 }
 .panel-section.active {
-    display: block; /* Mostrado por JS */
+    display: block; /* La activa se muestra */
 }
 .panel-section h4 {
     margin-top: 0;
@@ -258,23 +232,42 @@
     color: #495057;
 }
 
-/* Botones dentro del Panel FAB */
+/* --- Botones dentro del Panel FAB (Animaciones, Vista Interior, etc.) --- */
+/* --- DEFINICIÓN UNIFICADA Y CORREGIDA --- */
 .panel-button {
-    display: block;
+    display: block; /* Ocupa todo el ancho disponible */
     width: 100%;
     padding: 10px 15px;
     margin-bottom: 10px;
+    /* Estilos base (estado HABILITADO) */
     background-color: #6c757d;
     color: white;
     border: none;
     border-radius: 5px;
     text-align: left;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    opacity: 1; /* Opacidad completa por defecto */
+    transition: background-color 0.2s ease, opacity 0.3s ease; /* Transiciones suaves */
+    box-sizing: border-box; /* Asegura que padding no aumente el tamaño total */
 }
-.panel-button:hover {
-    background-color: #5a6268;
+
+/* Estilo Hover para el estado HABILITADO */
+.panel-button:not(:disabled):hover {
+    background-color: #5a6268; /* Oscurecer al pasar el ratón SÓLO si no está deshabilitado */
 }
+
+/* Último botón no necesita margen inferior */
 .panel-button:last-child {
     margin-bottom: 0;
+}
+
+/* --- ESTILOS PARA EL ESTADO DESHABILITADO (SIN !important) --- */
+.panel-button:disabled,
+.panel-button[disabled] {
+    opacity: 0.5; /* Aspecto semi-transparente */
+    cursor: not-allowed; /* Cursor indica no usable */
+    /* Mantiene el color de fondo base, la opacidad ya lo atenúa */
+    background-color: #6c757d;
+    /* Evita interacciones como el hover cuando está deshabilitado */
+    pointer-events: none;
 }

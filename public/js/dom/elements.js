@@ -4,8 +4,8 @@ const elements = {
     disconnectBtn: document.getElementById('disconnectBtn'),
     connectBtn: document.getElementById('connectBtn'),
     micBtn: document.getElementById('micBtn'),
-    cameraBtn: document.getElementById('cameraBtn'),
-    screenBtn: document.getElementById('screenBtn'),
+    // cameraBtn: document.getElementById('cameraBtn'),
+    // screenBtn: document.getElementById('screenBtn'),
     settingsBtn: document.getElementById('settingsBtn'),
     historyBtn: document.getElementById('historyBtn'),
 
