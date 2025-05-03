@@ -5,6 +5,7 @@
     "tailwind": {
         "config": "tailwind.config.js",
         "css": "resources/css/app.css",
+        "styles": "resources/css/styles.css",
         "baseColor": "neutral",
         "cssVariables": true,
         "prefix": ""

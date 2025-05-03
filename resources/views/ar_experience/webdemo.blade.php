@@ -7,7 +7,6 @@
       name="viewport"
       content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
-    <link type="text/css" rel="stylesheet" href="{{ asset('main.css') }}" />
   </head>
   <body>
     <button id="animacion1">animation 1</button>

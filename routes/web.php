@@ -22,6 +22,10 @@ Route::get('/ar', function () {
     return view('ar_experience/ar');
 })->name('ar');
 
+Route::get('/livechat', function () {
+    return view('ar_experience/livechat');
+})->name('livechat');
+
 Route::get('/webdemo', function () {
     return view('ar_experience/webdemo');
 })->name('webdemo');
