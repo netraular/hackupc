@@ -226,6 +226,22 @@ function init() {
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
+
+    //Animation
+    function doAnimation(indexAnimation, animation, mixer) {
+        if (!mixer) {
+            console.warn("El modelo o el mixer aún no están listos");
+            return;
+        }
+        const action = mixer.clipAction(animation);
+        action.reset();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        action.zeroSlopeAtEnd = true;
+        action.timeScale = 5;
+        action.play();
+    }
+
     // --- Luces ---
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -265,24 +281,7 @@ function init() {
 
     // Set up a listener for our custom animation event
     document.addEventListener('open-car-trunk', function() {
-        if (mixer && action) {
-            // Set button color to blue
-            button.style.backgroundColor = 'rgba(50, 50, 255, 0.7)'; // Cambiar color a azul
-            // Reset to frame 0
-            action.reset();
-            // Only animate once
-            action.setLoop(THREE.LoopOnce, 1);
-            action.clampWhenFinished = true;
-            // Smooth slope at end
-            action.zeroSlopeAtEnd = true;
-            // Increase animation speed
-            action.timeScale = 5;
-            // Start animation
-            action.play();
-            console.log("Animation triggered via custom event");
-        } else {
-            console.warn("Mixer or action not available yet");
-        }
+        doAnimation(1, placedObject.animations[1], mixer);
     });
 
     // Escuchar eventos personalizados del botón para manejar UI
@@ -328,8 +327,6 @@ function init() {
             mixer = new THREE.AnimationMixer(placedObject);
 
             animation1 = window.document.getElementById("animation1");
-            action = mixer.clipAction(gltf.animations[0]);
-            clip = gltf.animations[0];
             
             // 7) Cuando el mixer dispare el evento "finished"
             mixer.addEventListener("finished", (e) => {

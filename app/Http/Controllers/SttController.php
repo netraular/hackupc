@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Google\Cloud\Speech\V2\SpeechClient;
-use Google\Cloud\Speech\V2\RecognitionAudio;
-use Google\Cloud\Speech\V2\RecognitionConfig;
-use Google\Cloud\Speech\V2\RecognitionConfig\AutoDetectDecodingConfig;
+use Google\Cloud\Speech\V2\Client\SpeechClient;
+use Google\Cloud\Speech\V2\CreateRecognizerRequest;
+use Google\Cloud\Speech\V2\RecognizeRequest;
+use Google\Cloud\Speech\V2\RecognizeResponse;
 
 class SttController extends Controller
 {
@@ -46,39 +46,43 @@ class SttController extends Controller
         }
 
         // Instanciar SpeechClient con credenciales
-        $speechClient = new SpeechClient([
-            'credentials' => $credentialsPath
-        ]);
-
-        $audio = new RecognitionAudio([
-            'content' => $audioContent
-        ]);
-
-        $config = new RecognitionConfig([
-            'auto_detect_decoding_config' => new AutoDetectDecodingConfig(), // detecta MP3/WAV automáticamente
-            'language_codes' => ['es-ES'],
-            'model' => 'latest_long',
-        ]);
-
         try {
-            $response = $speechClient->recognize([
-                'config' => $config,
-                'audio' => $audio,
+            $speechClient = new SpeechClient([
+                'credentials' => $credentialsPath
             ]);
-        } catch (\Exception $e) {
-            return back()->withErrors(['Error al transcribir: ' . $e->getMessage()]);
-        } finally {
-            $speechClient->close();
-        }
 
-        $transcription = '';
-        foreach ($response->getResults() as $result) {
-            $alternatives = $result->getAlternatives();
-            if (count($alternatives) > 0) {
-                $transcription .= $alternatives[0]->getTranscript() . ' ';
+            // Obtener o crear el proyecto
+            $projectId = config('services.google.project_id');
+            $location = 'global'; // o la ubicación específica que estés utilizando
+
+            // Crear la solicitud de reconocimiento
+            $request = new RecognizeRequest();
+            $request->setRecognizer("projects/{$projectId}/locations/{$location}/recognizers/_");
+            $request->setContent($audioContent);
+            $request->setConfig([
+                'languageCodes' => ['es-ES'],
+                'model' => 'latest_long',
+            ]);
+
+            // Enviar la solicitud
+            $response = $speechClient->recognize($request);
+
+            // Procesar la respuesta
+            $transcription = '';
+            foreach ($response->getResults() as $result) {
+                foreach ($result->getAlternatives() as $alternative) {
+                    $transcription .= $alternative->getTranscript() . ' ';
+                }
             }
-        }
 
-        return back()->with('transcription', trim($transcription));
+            // Eliminar el archivo temporal
+            @unlink($fullPath);
+
+            return back()->with('transcription', trim($transcription));
+            
+        } catch (\Exception $e) {
+            @unlink($fullPath); // Intentar eliminar el archivo incluso si hay error
+            return back()->withErrors(['Error al transcribir: ' . $e->getMessage()]);
+        }
     }
 }
