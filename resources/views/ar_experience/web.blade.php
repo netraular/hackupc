@@ -125,7 +125,7 @@
             // Carga GLB
             const loader = new GLTFLoader();
             loader.load(
-                "modelo3d/oficial.glb",
+                "3dmodel/oficial.glb",
                 (g) => {
                     gltfData = g;
                     const mesh = g.scene;
@@ -211,7 +211,7 @@
             panelGroup.add(txtMesh);
 
             // Imagen
-            new THREE.TextureLoader().load("3d/imgs/carrito.jpg", (imgTex) => {
+            new THREE.TextureLoader().load("3dmodel/imgs/carrito.jpg", (imgTex) => {
                 const ar = imgTex.image.width / imgTex.image.height;
                 const imgMesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(1.5 * ar, 1.5),

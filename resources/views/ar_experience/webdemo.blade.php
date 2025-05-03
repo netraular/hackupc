@@ -84,7 +84,7 @@
         // Cargar modelo GLB
         const loader = new GLTFLoader();
         loader.load(
-          "{{ asset('3d/oficial.glb') }}",
+          "{{ asset('3dmodel/oficial.glb') }}",
           function (gltf) {
             mesh = gltf.scene;
             mesh.traverse(function (child) {
