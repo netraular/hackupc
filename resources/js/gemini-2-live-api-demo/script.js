@@ -18,6 +18,9 @@ import { closeCarRoofTool } from './tools/close-car-roof.js';
 import { openCarRightWheelsTool } from './tools/right-wheels.js';
 import { openCarLeftWheelsTool } from './tools/left-wheels.js';
 import { explainChargingTool } from './tools/charging-tutorial.js';
+import { stopShowLeftWheelsTool } from './tools/stop-show-left-wheels.js';
+import { stopShowRightWheelsTool } from './tools/stop-show-right-wheels.js';
+
 
 // import { PineconeRagTool } from './tools/pinecone-rag.js';
 // import { PdfRagTool } from './tools/pdf-rag.js';
@@ -51,7 +54,8 @@ toolManager.registerTool('closeCarRoofTool', new closeCarRoofTool());
 toolManager.registerTool('openCarRightWheelTool', new openCarRightWheelsTool());
 toolManager.registerTool('openCarLeftWheelsTool', new openCarLeftWheelsTool());
 toolManager.registerTool('explainChargingTool', new explainChargingTool());
-
+toolManager.registerTool('stopShowRightWheelsTool', new stopShowRightWheelsTool());
+toolManager.registerTool('stopShowLeftWheelsTool', new stopShowLeftWheelsTool());
 
 const chatManager = new ChatManager();
 

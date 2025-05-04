@@ -428,6 +428,9 @@
 
     <!-- Info panel shown at the start of AR session -->
     <div id="ar-info-panel">Point at a surface, then tap to place the object</div>
+    
+    <!-- Missing info element needed by the JavaScript code -->
+    <div id="info" style="display: none;">Point at a surface, then tap to place the object</div>
 
     <!-- Error messages related to AR support/permissions will be appended here by ARButton.js -->
     <!-- (Styled by .ar-error-message) -->
