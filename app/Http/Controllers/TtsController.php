@@ -38,8 +38,8 @@ class TtsController extends Controller
             $projectId = config('services.google.project_id');
 
             // Obtener configuración TTS desde .env/config (con valores por defecto)
-            $languageCode = config('services.google.tts.language_code', env('GOOGLE_TTS_LANGUAGE_CODE', 'es-ES'));
-            $voiceName = config('services.google.tts.voice_name', env('GOOGLE_TTS_VOICE_NAME', 'es-ES-Standard-A'));
+            $languageCode = config('services.google.tts.language_code');
+            $voiceName = config('services.google.tts.voice_name');
             $outputEncoding = 'MP3'; // O hacerlo configurable si es necesario
 
             // --- Verificaciones de Configuración ---

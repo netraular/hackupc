@@ -16,6 +16,18 @@ document.addEventListener('DOMContentLoaded', function() {
         {
             name: "Alexis Gabriel Díaz Fajardo",
             githubUser: "alekzihz",
+            website: "https://github.com/alekzihz", // Cambia '#' por la URL real
+            websiteText: "Sitio Web"
+        },
+        {
+            name: "Guillem Cadevall Ferreres",
+            githubUser: "guillecade22",
+            website: "https://github.com/guillecade22", // Cambia '#' por la URL real
+            websiteText: "Github"
+        },
+        {
+            name: "Alessandro La Conca",
+            githubUser: "Calonca",
             website: "#", // Cambia '#' por la URL real
             websiteText: "Sitio Web"
         },

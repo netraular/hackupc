@@ -2,6 +2,67 @@
 /*        Estilos para Popup "Sobre Nosotros" y Botón         */
 /* ============================================================ */
 
+#panel-section-chat #chat-form {
+    display: flex; /* Usa flexbox para alinear elementos horizontalmente */
+    align-items: center; /* Centra verticalmente los elementos */
+    margin-top: 10px; /* Espacio sobre el formulario */
+}
+
+#panel-section-chat #message-input {
+     flex-grow: 1; /* Permite que el input ocupe el espacio disponible */
+     margin-right: 8px; /* Espacio entre el input y los botones */
+     /* Otros estilos que ya tengas para tu input */
+}
+
+#panel-section-chat #controls-container {
+    display: flex; /* Alinea los botones dentro del contenedor */
+    align-items: center;
+}
+
+#panel-section-chat .chat-button { /* Estilo común para botones de chat si no lo tienes ya */
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 1.3em; /* Tamaño ajustado */
+    cursor: pointer;
+    padding: 6px 8px; /* Padding ajustado */
+    transition: color 0.3s ease, transform 0.2s ease;
+    display: flex; /* Para centrar icono si es necesario */
+    justify-content: center;
+    align-items: center;
+}
+ #panel-section-chat .chat-button:hover {
+    color: #007bff;
+ }
+ #panel-section-chat .chat-button:disabled {
+     color: #ccc;
+     cursor: not-allowed;
+ }
+ #panel-section-chat #send-button {
+     margin-right: 5px; /* Espacio entre enviar y micro */
+ }
+
+
+#panel-section-chat #record-button {
+    /* Hereda estilos de .chat-button */
+    font-size: 1.4em; /* Puede ser ligeramente más grande */
+}
+
+#panel-section-chat #record-button.is-recording {
+    color: red; /* Color mientras se graba */
+    animation: pulse 1.5s infinite;
+}
+#panel-section-chat #record-button.is-processing { /* Estilo opcional para indicar procesamiento */
+     color: #ff8c00; /* Naranja por ejemplo */
+     cursor: wait;
+}
+
+
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
 /* Overlay del Popup About Us */
 .popup-overlay {
     position: fixed;
@@ -442,3 +503,54 @@
 #panel-section-chat #chatbox::-webkit-scrollbar-thumb:hover {
     background: #aaa;
 }
+/* Añadido para chat-styles.css */
+
+/* Contenedor para el título y el botón mute */
+.chat-header {
+    display: flex;
+    justify-content: space-between; /* Alinea título a la izquierda, botón a la derecha */
+    align-items: center; /* Centra verticalmente */
+    margin-bottom: 10px; /* Espacio debajo del header */
+    padding-right: 5px; /* Evita que el botón pegue al borde */
+}
+
+.chat-header h4 {
+    margin: 0; /* Quita margen por defecto del h4 */
+}
+
+/* Estilo del botón de mute/unmute */
+.chat-mute-button {
+    background: none;
+    border: none;
+    color: #555; /* Color del icono */
+    cursor: pointer;
+    font-size: 1.1em; /* Tamaño del icono */
+    padding: 5px;
+    line-height: 1; /* Ajuste para centrar icono si es necesario */
+    transition: color 0.2s ease;
+}
+
+.chat-mute-button:hover {
+    color: #007bff; /* Color al pasar el ratón */
+}
+
+.chat-mute-button i {
+    display: block; /* Asegura que el icono ocupe su espacio */
+}
+
+/* Ajustes al área del chat para acomodar el header si es necesario */
+#panel-section-chat #chatbox {
+    /* Si el chatbox tenía una altura fija, puede que necesites ajustarla */
+    /* Ejemplo: height: calc(100% - 120px); si antes era 100% - 90px */
+    /* Asegúrate de que sigue funcionando bien en tu layout */
+    max-height: 300px; /* O la altura que prefieras */
+    overflow-y: auto;
+    /* ... otros estilos existentes ... */
+}
+
+/* Estilos del formulario (sin cambios necesarios normalmente) */
+#panel-section-chat #chat-form {
+    /* ... estilos existentes ... */
+    margin-top: 10px; /* Añadir espacio sobre el formulario */
+}
+

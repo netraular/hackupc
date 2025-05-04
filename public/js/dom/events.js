@@ -133,13 +133,13 @@ export function setupEventListeners(agent) {
         }
     };
 
-    elements.sendBtn.addEventListener('click', sendMessage);
-    elements.messageInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            sendMessage();
-        }
-    });
+    // elements.sendBtn.addEventListener('click', sendMessage);
+    // elements.messageInput.addEventListener('keypress', (event) => {
+    //     if (event.key === 'Enter') {
+    //         event.preventDefault();
+    //         sendMessage();
+    //     }
+    // });
 
     // Settings button click
     elements.settingsBtn.addEventListener('click', () => settingsManager.show());

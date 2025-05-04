@@ -55,12 +55,12 @@ export class ToolManager {
         try {
             const result = await tool.execute(args);
             console.info(`Tool call result: ${name}`, { result });
-            return result;
-            // return {
-            //     output: result,
-            //     id: id,
-            //     error: null
-            // }
+            // return result;
+            return {
+                output: result,
+                id: id,
+                error: null
+            }
 
         } catch (error) {
             console.error(`Tool execution failed: ${name}`, error);

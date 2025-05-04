@@ -8,7 +8,7 @@ export class openCarRightWheelsTool {
     getDeclaration() {
         return {
             name: "openCarRightWheelTool",
-            description: "Opens the car Right Wheels in AR mode",
+            description: "Show in detail the car Right Wheels in AR mode",
         };
     }
 

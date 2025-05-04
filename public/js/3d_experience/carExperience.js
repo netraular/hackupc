@@ -8,6 +8,8 @@ let carMesh = null;
 let mixer = null;
 let animations = [];
 let scene, camera, controls; // Referencias de Three.js
+let animacionActual = null;
+let action = null; // Variable para almacenar la acción actual
 
 /** Carga el modelo GLB */
 function loadCarModel(modelUrl, targetScene) {
@@ -48,9 +50,15 @@ function playCarAnimation(index) {
     }
     console.log(`[playCarAnimation] Reproduciendo: ${animation.name || `Animación ${index}`} (índice ${index})`);
     try {
-        const action = mixer.clipAction(animation);
+        action = mixer.clipAction(animation);
         action.reset().setLoop(THREE.LoopOnce, 1).clampWhenFinished = true;
-        handleStopAnimation(action, animation);
+        if (animacionActual !== null){
+            console.log(`[playCarAnimation] Deteniendo animación anterior: ${animacionActual}`);
+            const clip = animacionActual.getClip();
+            handleStopAnimation(animacionActual, clip);
+            
+        }
+        animacionActual = action; // Guardar la acción actual
         // mixer.stopAllAction(); // Descomentar si quieres que cada animación detenga las anteriores
         action.play();
         console.log(`[playCarAnimation] Animación ${index} iniciada.`);
@@ -58,9 +66,31 @@ function playCarAnimation(index) {
         console.error(`[playCarAnimation] Error al reproducir animación ${index}:`, error);
     }
 }
-/*detiene la animacion */
+function stopAllAnimations(mixer) {
+        if (!mixer) {
+          console.warn("El modelo o el mixer aún no están listos");
+          return;
+        }
+        mixer._actions.forEach((action) => {
+          const clip = action.getClip();
+          handleStopAnimation(action, clip);
+        });
+      }
+
+      // 1) Defino la función globalmente
+function stopAnimationActual(animation, mixer) {
+        if (!mixer) {
+          console.warn("El modelo o el mixer aún no están listos");
+          return;
+        }
+        const myAnimation = mixer.existingAction(animation);
+        if (myAnimation) {
+          const clip = action.getClip();
+          handleStopAnimation(myAnimation, clip);
+        }
+      } 
+
 function handleStopAnimation(animation, clip) {
-        console.log(animation);
         animation.reset();
         animation.clampWhenFinished = true;
         animation.setLoop(THREE.LoopOnce, 0);
@@ -71,7 +101,6 @@ function handleStopAnimation(animation, clip) {
             : 0; // si va hacia adelante, desde el principio
         animation.play();
       }
-
 
 /** Cambia a vista interior */
 function setInsideView() { // Ya no necesita argumentos, usa las variables globales del módulo

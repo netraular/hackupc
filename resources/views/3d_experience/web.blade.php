@@ -15,7 +15,7 @@
     {{-- Vite CSS --}}
     @vite([
         'resources/css/3d_experience/fab-styles.css',
-        'resources/css/3d_experience/chat-styles.css' // <--- AÑADIDO CSS DEL CHAT
+        'resources/css/3d_experience/chat-styles.css' // <-- Ya incluye estilos del chat
         // 'resources/css/app.css',
         // 'resources/js/app.js',
     ])
@@ -57,9 +57,17 @@
 
             {{-- Sección de Chat --}}
             <div id="panel-section-chat" class="panel-section">
-                <h4>Chat IA</h4> {{-- Título actualizado --}}
+                {{-- ===== TÍTULO Y BOTÓN MUTE/UNMUTE ===== --}}
+                <div class="chat-header">
+                    <h4>Chat IA</h4>
+                    <button id="mute-toggle-button" class="chat-mute-button" title="Silenciar audio">
+                        <i class="fas fa-volume-high"></i> {{-- Icono inicial --}}
+                    </button>
+                </div>
+                {{-- ===================================== --}}
 
-                {{-- ========== HTML DEL CHAT PEGADO AQUÍ ========== --}}
+
+                {{-- ========== HTML DEL CHAT ========== --}}
                 <div id="chatbox">
                     {{-- Mensaje inicial del AI --}}
                     <div class="ai-message-container message-container">
@@ -79,6 +87,9 @@
                     </div>
                 </form>
                 {{-- ========== FIN HTML DEL CHAT ========== --}}
+
+                {{-- Elemento de Audio Oculto (opcional, podemos crearlo dinámicamente) --}}
+                {{-- <audio id="tts-audio-player" style="display: none;"></audio> --}}
 
             </div>
         </div>
@@ -103,9 +114,9 @@
       window.ExperienceConfig = {
         modelUrl: "{{ asset('3dmodel/oficial_3.glb') }}",
         panelImageUrl: "{{ asset('3dmodel/imgs/carrito.jpg') }}",
-        // --- AÑADIDO: URL para el chat ---
-        chatSendUrl: "{{ route('chat.send') }}", // Usa la función route() de Blade
-        csrfToken: "{{ csrf_token() }}"      // Pasar también el token aquí es útil
+        chatSendUrl: "{{ route('chat.send') }}",      // URL para enviar mensaje al chat
+        ttsSynthesizeUrl: "{{ route('tts.synthesize') }}", // <--- AÑADIDO: URL para generar TTS
+        csrfToken: "{{ csrf_token() }}"               // Token CSRF
       };
     </script>
 
@@ -149,7 +160,7 @@
     {{-- Scripts Adicionales --}}
     <script src="{{ asset('js/3d_experience/about-popup.js') }}"></script>
     <script src="{{ asset('js/3d_experience/fabController.js') }}"></script>
-    <script src="{{ asset('js/3d_experience/chatIntegration.js') }}"></script>
+    <script src="{{ asset('js/3d_experience/chatIntegration.js') }}"></script> {{-- <--- Este script se modificará --}}
 
 </body>
 </html>
