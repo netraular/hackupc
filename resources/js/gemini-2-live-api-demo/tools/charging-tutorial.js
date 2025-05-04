@@ -14,14 +14,14 @@ export class explainChargingTool {
     getDeclaration() {
         return {
             name: "explainChargingTool",
-            description: "Use this tool when a user asks about charging or doors.",
+            description: "You objective is to teach the owner to use their car. Use these information to guide the owner.",
             parameters: {
                 type: "object",
                 properties: {
                     tutorial: {
                         type: "string",
                         enum: ["charging", "doors"],
-                        description: "Type of tutorial to display (charging or doors)"
+                        description: "Type of information to tell the user about (charging or doors)"
                     }
                 },
                 required: []

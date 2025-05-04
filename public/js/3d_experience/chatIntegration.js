@@ -229,55 +229,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Función genérica para enviar datos y manejar respuesta ---
     async function sendData(jsonData, headers) {
-        console.log("CHAT_TTS_LOG: Entrando en sendData()."); // <-- LOG INICIO SENDDATA
+        console.log("CHAT_TTS_LOG: Entrando en sendData().");
         try {
-            console.log(`CHAT_TTS_LOG: Haciendo fetch a Chat API: ${chatSendUrl}`); // <-- LOG ANTES FETCH CHAT
+            console.log(`CHAT_TTS_LOG: Haciendo fetch a Chat API: ${chatSendUrl}`);
             const response = await fetch(chatSendUrl, {
                 method: 'POST',
                 headers: headers,
                 body: jsonData
             });
-            console.log(`CHAT_TTS_LOG: Respuesta recibida de Chat API. Status: ${response.status}`); // <-- LOG STATUS CHAT
+            console.log(`CHAT_TTS_LOG: Respuesta recibida de Chat API. Status: ${response.status}`);
 
             showTypingIndicator(false);
 
             let responseData = {};
             try {
                 responseData = await response.json();
-                 console.log("CHAT_TTS_LOG: Respuesta Chat API parseada:", responseData); // <-- LOG PARSEO CHAT OK
+                 console.log("CHAT_TTS_LOG: Respuesta Chat API parseada:", responseData);
             } catch (e) {
                 console.error("CHAT_TTS_LOG: Error parseando JSON de Chat API:", e);
                 const responseText = await response.text();
                 console.error("CHAT_TTS_LOG: Respuesta Texto Chat API:", responseText);
-                responseData = { error: `Error ${response.status}: Invalid response from server.` };
+                // Usa la clave 'reply' si el backend la envió en el error, sino un mensaje genérico
+                responseData = { error: `Error ${response.status}: Invalid response from server.`, reply: `Sorry, I received an invalid response (Status ${response.status}).` };
             }
 
-            if (response.ok && responseData.reply) {
-                const aiReplyText = responseData.reply;
-                console.log("CHAT_TTS_LOG: Respuesta AI recibida:", aiReplyText); // <-- LOG RESPUESTA AI
-                addMessage(aiReplyText, 'ai');
+            // ----- MODIFICACIÓN AQUÍ -----
+            // Antes comprobaba response.ok && responseData.reply
+            // Ahora comprobamos response.ok y si existe la clave 'message'
+            if (response.ok && responseData.message) {
+                const aiMessageText = responseData.message; // <-- Extraer de 'message'
+                const aiAnimationsData = responseData.animations; // <-- Extraer 'animations'
 
-                // --- LLAMAR A TTS DESPUÉS DE RECIBIR LA RESPUESTA ---
-                console.log("CHAT_TTS_LOG: Llamando a fetchAndPlayTTS() desde sendData() con la respuesta AI."); // <-- LOG ANTES LLAMADA TTS
-                await fetchAndPlayTTS(aiReplyText);
+                console.log("CHAT_TTS_LOG: Respuesta AI (mensaje) recibida:", aiMessageText);
+                console.log("CHAT_TTS_LOG: Respuesta AI (animaciones) recibida:", aiAnimationsData);
+
+                addMessage(aiMessageText, 'ai'); // <-- Usar el texto del mensaje
+
+                // --- Procesar animaciones (si existen y son válidas) ---
+                if (aiAnimationsData) {
+                    try {
+                        // La respuesta del log muestra que 'animations' es una *cadena* "[]"
+                        // Necesitamos parsearla para obtener un array JS
+                        const animationsArray = JSON.parse(aiAnimationsData);
+                        console.log("CHAT_TTS_LOG: [ANIMATIONS] animationsArray (parsed):", animationsArray);
+
+                        console.log("CHAT_TTS_LOG: Animaciones parseadas:", animationsArray);
+                        if (Array.isArray(animationsArray) && animationsArray.length > 0) {
+                            // AQUÍ: Lógica para disparar las animaciones basadas en 'animationsArray'
+                            // Por ejemplo: dispatchAnimationEvent(animationsArray);
+                             console.log("CHAT_TTS_LOG: ¡Se recibieron animaciones para ejecutar!", animationsArray);
+                             // TODO: Implementar la lógica para ejecutar estas animaciones
+                        } else {
+                           console.log("CHAT_TTS_LOG: El array de animaciones está vacío o no es un array válido.");
+                        }
+                    } catch (parseError) {
+                        console.error("CHAT_TTS_LOG: Error parseando la cadena de animaciones JSON:", parseError, "Data:", aiAnimationsData);
+                    }
+                }
+
+                // --- LLAMAR A TTS CON EL TEXTO DEL MENSAJE ---
+                console.log("CHAT_TTS_LOG: Llamando a fetchAndPlayTTS() desde sendData() con la respuesta AI.");
+                await fetchAndPlayTTS(aiMessageText); // <-- Usar el texto del mensaje
                 // --------------------------------------------------
 
             } else {
-                const errorMessage = responseData?.reply || responseData?.error || `Error ${response.status}`;
-                 console.error("CHAT_TTS_LOG: Error en la respuesta de Chat API o formato inesperado:", errorMessage, responseData); // <-- LOG ERROR CHAT API
-                addMessage(`Error: ${errorMessage}`, 'ai');
-                console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error en Chat API."); // <-- LOG STOP POR ERROR
+                // Si response.ok es true pero falta 'message', es un error de formato inesperado.
+                // Si response.ok es false, usamos el 'reply' o 'error' que el backend debería haber incluido.
+                const errorMessage = responseData?.reply || responseData?.error || `Error ${response.status}: Unexpected response format.`;
+                console.error("CHAT_TTS_LOG: Error en la respuesta de Chat API o formato inesperado:", errorMessage, responseData);
+                addMessage(`${errorMessage}`, 'ai'); // Mostrar el error al usuario
+                console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error en Chat API.");
                 stopCurrentAudio();
             }
+            // ----- FIN MODIFICACIÓN -----
 
         } catch (error) {
             showTypingIndicator(false);
-            console.error('CHAT_TTS_LOG: Error en bloque try/catch de sendData (Fetch Error):', error); // <-- LOG ERROR FETCH/GENERAL SENDDATA
+            console.error('CHAT_TTS_LOG: Error en bloque try/catch de sendData (Fetch Error):', error);
             addMessage('Error de conexión. Por favor, inténtalo de nuevo.', 'ai');
-            console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error de conexión."); // <-- LOG STOP POR ERROR CONEXIÓN
+            console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error de conexión.");
             stopCurrentAudio();
         } finally {
-            console.log("CHAT_TTS_LOG: Bloque finally de sendData. Habilitando controles."); // <-- LOG FINALLY
+            console.log("CHAT_TTS_LOG: Bloque finally de sendData. Habilitando controles.");
             setControlsEnabled(true);
             if (messageInput) {
                 messageInput.focus();

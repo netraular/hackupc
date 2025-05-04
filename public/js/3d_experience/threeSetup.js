@@ -17,8 +17,11 @@ function initThree(container) {
 
     // Escena
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xa0a0a0);
-    scene.fog = new THREE.Fog(0xa0a0a0, 4, 20);
+    //scene.background = new THREE.Color(0xa0a0a0);
+    //scene.fog = new THREE.Fog(0xa0a0a0, 4, 20);
+    scene.background = new THREE.Color(0xbfd1e5);
+    scene.fog = new THREE.Fog(0xbfd1e5, 10, 50);
+
 
     // Luces
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 3);

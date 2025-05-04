@@ -24,6 +24,8 @@ function loadCarModel(modelUrl, targetScene) {
             carMesh.position.y = 0;
             scene.add(carMesh);
             animations = gltf.animations || [];
+            console.log('AAAAAAAAAAAAAAAAAAAAAA');
+            console.log(animations);
             mixer = animations.length > 0 ? new THREE.AnimationMixer(carMesh) : null;
             console.log(`Modelo cargado: ${modelUrl}, ${animations.length} animaciones encontradas.`);
             if (!mixer) console.warn("Modelo sin animaciones, mixer no creado.");
@@ -238,15 +240,6 @@ function exportToDraco() {
     URL.revokeObjectURL(link.href); // Limpiar URL del objeto
 }
 
-/** Configura lil-gui (Opcional) */
-function setupGUI() {
-    const gui = new GUI({ title: 'Controles de Depuración' });
-    const params = { exportDraco: exportToDraco };
-    gui.add(params, 'exportDraco').name('Exportar a Draco');
-    // Puedes añadir más controles GUI aquí si los necesitas para depurar
-    console.log("[setupGUI] GUI de depuración configurada.");
-}
-
 /** Función principal de inicialización */
 async function initCarExperience(threeElements, modelUrl, panelImageUrl) { // panelImageUrl ya no se usa
     scene = threeElements.scene;
@@ -267,8 +260,6 @@ async function initCarExperience(threeElements, modelUrl, panelImageUrl) { // pa
         // ****** SETUPUILISTENERS SE LLAMA DESPUÉS DE LA CARGA ******
         setupUIListeners(camera, controls); // Ahora habilitará/deshabilitará correctamente
 
-        console.log("[initCarExperience] Configurando GUI (opcional)...");
-        setupGUI();
 
         console.log("[initCarExperience] Inicialización completada exitosamente.");
     } catch (error) {

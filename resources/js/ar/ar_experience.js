@@ -147,7 +147,9 @@ class ARButton {
              // Mostrar mensaje de error más claro
              const errorDiv = document.createElement('div');
              errorDiv.className = 'ar-error-message';
-             errorDiv.innerHTML = 'Tu navegador o dispositivo no soporta WebXR para Realidad Aumentada.<br/>Prueba con Chrome en un dispositivo Android compatible o un visor WebXR en iOS.';
+             errorDiv.innerHTML = 'Tu dispositivo no soporta WebXR.<br/>Prueba con Chrome en Android o un visor compatible. También puedes visitar <a href="https://hackupc.raular.com" target="_blank">hackupc.raular.com</a> para una experiencia inmersiva sin AR.';
+
+
              document.body.appendChild(errorDiv);
         }
 
@@ -226,7 +228,7 @@ let isDragging = false;
 let isPinching = false;
 let initialPinchDistance = 0;
 let previousTouchX = 0;
-let initialScale = new THREE.Vector3(); // To store scale when pinch starts
+let initialScale = new THREE.Vector3(1, 1, 1); // Initialize with default scale
 const ROTATION_SPEED = 0.005; // Adjust sensitivity as needed
 // --- GESTURE: END ---
 
@@ -289,7 +291,7 @@ function init() {
         doAnimation(6, clip[6], mixer);
     });
 
-    document.addEventListener('close_roof', function() {
+    document.addEventListener('close-roof', function() {
         stopAnimationActual(clip[6], mixer);
     });
 
@@ -297,8 +299,16 @@ function init() {
         doAnimation(8, clip[8], mixer);
     });
 
+    document.addEventListener('close_l_wheels', function() {
+        stopAnimationActual(clip[8], mixer);
+    });
+
     document.addEventListener('open_r_wheels', function() {
         doAnimation(7, clip[7], mixer);
+    });
+
+    document.addEventListener('close_r_wheels', function() {
+        stopAnimationActual(clip[7], mixer);
     });
 
     function doAnimation(indexAnimation, animation, localMixer) { // Renombrado mixer a localMixer para evitar confusión
@@ -447,32 +457,25 @@ function init() {
             placedObject.visible = false;
             scene.add(placedObject);
 
-            // Scale the model to 10% of its original size
-            // placedObject.scale.set(0.1, 0.1, 0.1);
+            // Set an initial scale to ensure the car is visible and properly sized
+            // placedObject.scale.set(0.5, 0.5, 0.5); // Start at half size
+            initialScale.copy(placedObject.scale); // Store initial scale
+
+            console.log('Model loaded with initial scale:', placedObject.scale);
 
             mixer = new THREE.AnimationMixer(placedObject);
-
             animation1 = window.document.getElementById("animation1");
-
             clip = gltf.animations;
             
-            // 7) Cuando el mixer dispare el evento "finished"
             mixer.addEventListener("finished", (e) => {
                 console.log("finished animating"); 
             });
         },
         undefined,
         function (error) {
-        console.error("Error al cargar car.glb:", error);
+            console.error("Error loading 3D model:", error);
         }
 );
-
-// Update the animation mixer inside the render loop
-// function animate() {
-//     if (mixer) {
-//         mixer.update(0.01); // Update animations by a small time step (you can tweak this)
-//     }
-// }
 
 function animate() {
     //
@@ -487,6 +490,9 @@ function onTouchStart(event) {
     if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
         return;
     }
+
+    // Log touch event for debugging
+    console.log('Touch event started', event.touches.length);
 
     const touches = event.touches;
 
@@ -503,10 +509,18 @@ function onTouchStart(event) {
         isDragging = true;
         isPinching = true;
         
-        // Store initial scale
-        initialScale.copy(placedObject.scale);
+        // Store initial scale - make sure we have a valid initial scale
+        if (placedObject.scale.x !== 0 && placedObject.scale.y !== 0 && placedObject.scale.z !== 0) {
+            initialScale.copy(placedObject.scale);
+        } else {
+            // Default scale if the object scale is invalid
+            initialScale.set(1, 1, 1);
+        }
+        
+        console.log('Initial scale set to:', initialScale);
         
         event.preventDefault(); // Prevent browser scrolling/zooming
+        event.stopPropagation(); // Stop event from bubbling up
     } else {
         // Not a two-finger gesture
         isDragging = false;
@@ -533,15 +547,36 @@ function onTouchMove(event) {
             const deltaX = currentTouchX - previousTouchX;
             placedObject.rotation.y += deltaX * ROTATION_SPEED;
             previousTouchX = currentTouchX;
+            console.log('Rotating object, deltaX:', deltaX);
         }
         
         // Handle scaling
         if (isPinching && initialPinchDistance > 0) {
             const scaleFactor = currentPinchDistance / initialPinchDistance;
-            placedObject.scale.copy(initialScale).multiplyScalar(scaleFactor);
+            
+            // Apply the scale more directly and explicitly
+            const newScale = new THREE.Vector3(
+                initialScale.x * scaleFactor,
+                initialScale.y * scaleFactor,
+                initialScale.z * scaleFactor
+            );
+            
+            // Apply bounds to prevent extreme scaling
+            const minScale = 0.1;
+            const maxScale = 5.0;
+            
+            newScale.x = Math.max(minScale, Math.min(maxScale, newScale.x));
+            newScale.y = Math.max(minScale, Math.min(maxScale, newScale.y));
+            newScale.z = Math.max(minScale, Math.min(maxScale, newScale.z));
+            
+            // Set the new scale
+            placedObject.scale.copy(newScale);
+            
+            console.log('Scaling object, factor:', scaleFactor, 'New scale:', newScale);
         }
         
         event.preventDefault();
+        event.stopPropagation(); // Ensure the event doesn't bubble up
     }
 }
 
@@ -603,9 +638,14 @@ function renderLoop(timestamp, frame) {
 
 
     // --- GESTURE: Add Touch Event Listeners to the Canvas ---
-    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false }); // passive: false to allow preventDefault
-    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
-    renderer.domElement.addEventListener('touchend', onTouchEnd);
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false, capture: true }); // Use capture phase
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    renderer.domElement.addEventListener('touchend', onTouchEnd, { capture: true });
+    
+    // Add these event listeners to document as well for better touch capture
+    document.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', onTouchEnd, { capture: true });
     
     // --- Eventos y Bucle de Renderizado ---
     window.addEventListener('resize', onWindowResize);
