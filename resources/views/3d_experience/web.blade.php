@@ -53,7 +53,7 @@
                 <button class="panel-button" data-panel-animation="8" disabled>Left Wheels</button>
 
                 <hr style="margin: 15px 0; border-color: #eee;">
-                <button class="panel-button" data-panel-action="panelInsideBtn ">Vista Interior</button>
+                <!-- <button class="panel-button" data-panel-action="panelInsideBtn ">Vista Interior</button> -->
             </div>
 
 
