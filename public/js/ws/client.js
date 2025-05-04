@@ -224,7 +224,7 @@ export class GeminiWebsocketClient extends EventEmitter {
         }
 
         await this.sendJSON({ toolResponse: {functionResponses: result} });
-        console.debug(`Tool response sent to ${this.name}:`, toolResponse);
+        console.log(`Tool response sent to ${this.name}:`, toolResponse);
     }
 
     /**

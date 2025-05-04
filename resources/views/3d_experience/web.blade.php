@@ -14,12 +14,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     {{-- Vite CSS --}}
     @vite([
-        'resources/css/3d_experience/fab-styles.css',
-        'resources/css/3d_experience/chat-styles.css' // <-- Ya incluye estilos del chat
-        // 'resources/css/app.css',
-        // 'resources/js/app.js',
-    ])
-</head>
+    'resources/css/3d_experience/fab-styles.css',
+    'resources/css/3d_experience/chat-styles.css' // <-- Ya incluye estilos del chat
+        // 'resources/css/app.css' ,
+        // 'resources/js/app.js' ,
+        ])
+        </head>
 
 <body>
     {{-- Botón "Sobre Nosotros" --}}
@@ -42,18 +42,22 @@
             <div id="panel-section-test" class="panel-section">
                 <h4>Controles</h4>
                 <p>Controla las animaciones y la vista:</p>
-                <button class="panel-button" data-panel-animation="0" disabled>Animación 1</button>
-                <button class="panel-button" data-panel-animation="1" disabled>Animación 2</button>
-                <button class="panel-button" data-panel-animation="2" disabled>Animación 3</button>
-                <button class="panel-button" data-panel-animation="3" disabled>Animación 4</button>
-                <button class="panel-button" data-panel-animation="4" disabled>Animación 5</button>
-                <button class="panel-button" data-panel-animation="5" disabled>Animación 6</button>
-                <button class="panel-button" data-panel-animation="6" disabled>Animación 7</button>
-                <button class="panel-button" data-panel-animation="7" disabled>Animación 8</button>
-                <button class="panel-button" data-panel-animation="8" disabled>Animación 9</button>
+                <button class="panel-button" data-panel-animation="0" disabled>Front Left Door</button>
+                <button class="panel-button" data-panel-animation="1" disabled>Front Right Door</button>
+                <button class="panel-button" data-panel-animation="2" disabled>Rear Left Door</button>
+                <button class="panel-button" data-panel-animation="3" disabled>Rear Right Door</button>
+                <button class="panel-button" data-panel-animation="4" disabled>Trunk</button>
+                <button class="panel-button" data-panel-animation="5" disabled>Loader</button>
+                <button class="panel-button" data-panel-animation="6" disabled>Roof</button>
+                <button class="panel-button" data-panel-animation="7" disabled>Right Wheels</button>
+                <button class="panel-button" data-panel-animation="8" disabled>Left Wheels</button>
+
                 <hr style="margin: 15px 0; border-color: #eee;">
                 <button class="panel-button" data-panel-action="panelInsideBtn ">Vista Interior</button>
             </div>
+
+
+
 
             {{-- Sección de Chat --}}
             <div id="panel-section-chat" class="panel-section">
@@ -94,6 +98,14 @@
             </div>
         </div>
     </div>
+
+    <div id="panelOverlay" class="panel-overlay">
+        <div class="panel-card">
+            <button class="panel-close">&times;</button>
+            <img src="" alt="imagen del panel" />
+            <p></p>
+        </div>
+    </div>
     {{-- ========================================= --}}
     {{-- =      FIN FLOATING ACTION BUTTON       = --}}
     {{-- ========================================= --}}
@@ -111,24 +123,32 @@
 
     {{-- Configuración JS --}}
     <script>
-      window.ExperienceConfig = {
-        modelUrl: "{{ asset('3dmodel/oficial_3.glb') }}",
-        panelImageUrl: "{{ asset('3dmodel/imgs/carrito.jpg') }}",
-        chatSendUrl: "{{ route('chat.send') }}",      // URL para enviar mensaje al chat
-        ttsSynthesizeUrl: "{{ route('tts.synthesize') }}", // <--- AÑADIDO: URL para generar TTS
-        csrfToken: "{{ csrf_token() }}"               // Token CSRF
-      };
+        window.ExperienceConfig = {
+            modelUrl: "{{ asset('3dmodel/oficial_3.glb') }}",
+            panelImageUrl: "{{ asset('3dmodel/imgs/carrito.jpg') }}",
+            chatSendUrl: "{{ route('chat.send') }}", // URL para enviar mensaje al chat
+            ttsSynthesizeUrl: "{{ route('tts.synthesize') }}", // <--- AÑADIDO: URL para generar TTS
+            csrfToken: "{{ csrf_token() }}" // Token CSRF
+        };
     </script>
 
     {{-- Script Principal (Módulo ES6 - sin cambios) --}}
     <script type="module">
-        import { initThree, startAnimationLoop } from '{{ asset("js/3d_experience/threeSetup.js") }}';
-        import { initCarExperience, updateCarExperience } from '{{ asset("js/3d_experience/carExperience.js") }}';
+        import {
+            initThree,
+            startAnimationLoop
+        } from '{{ asset("js/3d_experience/threeSetup.js") }}';
+        import {
+            initCarExperience,
+            updateCarExperience
+        } from '{{ asset("js/3d_experience/carExperience.js") }}';
 
         const config = window.ExperienceConfig;
         let threeElements;
 
-        function displayError(message) { /* ... (sin cambios) ... */ }
+        function displayError(message) {
+            /* ... (sin cambios) ... */
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOM cargado. Iniciando scripts principales...");
@@ -163,4 +183,5 @@
     <script src="{{ asset('js/3d_experience/chatIntegration.js') }}"></script> {{-- <--- Este script se modificará --}}
 
 </body>
+
 </html>

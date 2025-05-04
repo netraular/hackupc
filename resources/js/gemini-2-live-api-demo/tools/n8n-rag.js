@@ -41,13 +41,13 @@ export class PdfRagTool {
     getDeclaration() {
         return {
             name: "pdfSearch",
-            description: "Searches for information in the car manual, use this tool when the user asks a question about the car",
+            description: "Search for information in the car manual. When the user ask for information about something that you don't know about use this tool to give them a simple answer.",
             parameters: {
                 type: "object",
                 properties: {
                     query: {
                         type: "string",
-                        description: "The question to answer from the PDF document(s)"
+                        description: "The question to answer"
                     },
                 },
                 required: ["query"]
@@ -79,7 +79,8 @@ export class PdfRagTool {
                 body: dataToSend // Siempre enviamos JSON
             });
             const jsonResponse = await response.json();
-            return jsonResponse.reply;
+            console.log(jsonResponse);
+            return jsonResponse.message;
             
         } catch (error) {
             console.error("Error in PDF search:", error);

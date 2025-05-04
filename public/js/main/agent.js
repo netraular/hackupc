@@ -120,6 +120,7 @@ export class GeminiAgent{
         
     // TODO: Handle multiple function calls
     async handleToolCall(toolCall) {
+        console.log(toolCall)
         const functionCall = toolCall.functionCalls[0];
         const response = await this.toolManager.handleToolCall(functionCall);
         console.log('todo Tool call response:', response);

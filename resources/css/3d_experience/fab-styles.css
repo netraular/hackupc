@@ -3,66 +3,97 @@
 /* ============================================================ */
 
 #panel-section-chat #chat-form {
-    display: flex; /* Usa flexbox para alinear elementos horizontalmente */
-    align-items: center; /* Centra verticalmente los elementos */
-    margin-top: 10px; /* Espacio sobre el formulario */
+    display: flex;
+    /* Usa flexbox para alinear elementos horizontalmente */
+    align-items: center;
+    /* Centra verticalmente los elementos */
+    margin-top: 10px;
+    /* Espacio sobre el formulario */
 }
 
 #panel-section-chat #message-input {
-     flex-grow: 1; /* Permite que el input ocupe el espacio disponible */
-     margin-right: 8px; /* Espacio entre el input y los botones */
-     /* Otros estilos que ya tengas para tu input */
+    flex-grow: 1;
+    /* Permite que el input ocupe el espacio disponible */
+    margin-right: 8px;
+    /* Espacio entre el input y los botones */
+    /* Otros estilos que ya tengas para tu input */
 }
 
 #panel-section-chat #controls-container {
-    display: flex; /* Alinea los botones dentro del contenedor */
+    display: flex;
+    /* Alinea los botones dentro del contenedor */
     align-items: center;
 }
 
-#panel-section-chat .chat-button { /* Estilo común para botones de chat si no lo tienes ya */
+#panel-section-chat .chat-button {
+    /* Estilo común para botones de chat si no lo tienes ya */
     background: none;
     border: none;
     color: #555;
-    font-size: 1.3em; /* Tamaño ajustado */
+    font-size: 1.3em;
+    /* Tamaño ajustado */
     cursor: pointer;
-    padding: 6px 8px; /* Padding ajustado */
+    padding: 6px 8px;
+    /* Padding ajustado */
     transition: color 0.3s ease, transform 0.2s ease;
-    display: flex; /* Para centrar icono si es necesario */
+    display: flex;
+    /* Para centrar icono si es necesario */
     justify-content: center;
     align-items: center;
 }
- #panel-section-chat .chat-button:hover {
+
+#panel-section-chat .chat-button:hover {
     color: #007bff;
- }
- #panel-section-chat .chat-button:disabled {
-     color: #ccc;
-     cursor: not-allowed;
- }
- #panel-section-chat #send-button {
-     margin-right: 5px; /* Espacio entre enviar y micro */
- }
+}
+
+#panel-section-chat .chat-button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+#panel-section-chat #send-button {
+    margin-right: 5px;
+    /* Espacio entre enviar y micro */
+}
 
 
 #panel-section-chat #record-button {
     /* Hereda estilos de .chat-button */
-    font-size: 1.4em; /* Puede ser ligeramente más grande */
+    font-size: 1.4em;
+    /* Puede ser ligeramente más grande */
 }
 
 #panel-section-chat #record-button.is-recording {
-    color: red; /* Color mientras se graba */
+    color: red;
+    /* Color mientras se graba */
     animation: pulse 1.5s infinite;
 }
-#panel-section-chat #record-button.is-processing { /* Estilo opcional para indicar procesamiento */
-     color: #ff8c00; /* Naranja por ejemplo */
-     cursor: wait;
+
+#panel-section-chat #record-button.is-processing {
+    /* Estilo opcional para indicar procesamiento */
+    color: #ff8c00;
+    /* Naranja por ejemplo */
+    cursor: wait;
 }
 
 
 @keyframes pulse {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.95); }
-    100% { opacity: 1; transform: scale(1); }
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
+
 /* Overlay del Popup About Us */
 .popup-overlay {
     position: fixed;
@@ -72,7 +103,8 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 1000;
-    display: none; /* Inicialmente oculto, JS lo cambia a flex */
+    display: none;
+    /* Inicialmente oculto, JS lo cambia a flex */
     justify-content: center;
     align-items: center;
     padding: 20px;
@@ -117,6 +149,7 @@
     padding: 0;
     line-height: 1;
 }
+
 .close-button:hover {
     color: #333;
 }
@@ -127,6 +160,7 @@
     flex-direction: column;
     gap: 20px;
 }
+
 .member-info {
     display: flex;
     align-items: center;
@@ -134,9 +168,11 @@
     padding: 10px;
     border-bottom: 1px solid #f0f0f0;
 }
+
 .member-info:last-child {
     border-bottom: none;
 }
+
 .github-avatar {
     width: 60px;
     height: 60px;
@@ -144,20 +180,24 @@
     object-fit: cover;
     border: 2px solid #eee;
 }
+
 .member-details {
     flex-grow: 1;
 }
+
 .member-name {
     font-weight: bold;
     margin: 0 0 5px 0;
     font-size: 1.1em;
     color: #444;
 }
+
 .member-website {
     color: #007bff;
     text-decoration: none;
     font-size: 0.9em;
 }
+
 .member-website:hover {
     text-decoration: underline;
 }
@@ -172,11 +212,14 @@
     border-radius: 5px;
     margin: 5px;
     font-size: 14px;
-    position: absolute; /* Cambiado de fixed a absolute */
+    position: absolute;
+    /* Cambiado de fixed a absolute */
     top: 10px;
     left: 10px;
-    z-index: 10; /* Menor que el FAB y el Popup */
+    z-index: 10;
+    /* Menor que el FAB y el Popup */
 }
+
 #about-us-button:hover {
     background-color: #5a6268;
 }
@@ -188,7 +231,8 @@
 
 /* Estilo base del FAB (Botón flotante principal) */
 .fab {
-    position: fixed; /* Fijo en la ventana */
+    position: fixed;
+    /* Fijo en la ventana */
     bottom: 25px;
     right: 25px;
     width: 60px;
@@ -203,9 +247,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 1050; /* Por encima de otros elementos */
+    z-index: 1050;
+    /* Por encima de otros elementos */
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
+
 .fab:hover {
     background-color: #0056b3;
     transform: scale(1.05);
@@ -213,26 +259,35 @@
 
 /* Estilo base del Panel FAB (Contenedor que se despliega) */
 .fab-panel {
-    position: fixed; /* Fijo en la ventana */
-    bottom: 95px; /* Encima del FAB */
+    position: fixed;
+    /* Fijo en la ventana */
+    bottom: 95px;
+    /* Encima del FAB */
     right: 25px;
     width: 300px;
-    max-height: 400px; /* Límite de altura */
+    max-height: 400px;
+    /* Límite de altura */
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-    z-index: 1040; /* Ligeramente debajo del FAB principal */
-    overflow: hidden; /* Contiene los elementos hijos */
-    display: none; /* Oculto por defecto, JS lo muestra */
+    z-index: 1040;
+    /* Ligeramente debajo del FAB principal */
+    overflow: hidden;
+    /* Contiene los elementos hijos */
+    display: none;
+    /* Oculto por defecto, JS lo muestra */
     flex-direction: column;
     opacity: 0;
-    transform: translateY(10px); /* Efecto de aparición desde abajo */
+    transform: translateY(10px);
+    /* Efecto de aparición desde abajo */
     /* Transiciones para la aparición/desaparición */
     transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0.3s;
 }
+
 /* Estado activo del panel, mostrado por JS */
 .fab-panel.active {
-    display: flex; /* Cambia a flex para mostrar contenido */
+    display: flex;
+    /* Cambia a flex para mostrar contenido */
     opacity: 1;
     transform: translateY(0);
     transition: opacity 0.3s ease, transform 0.3s ease, display 0s linear 0s;
@@ -242,10 +297,13 @@
 .panel-navigation {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
-    background-color: #f8f9fa; /* Fondo ligeramente gris */
+    background-color: #f8f9fa;
+    /* Fondo ligeramente gris */
 }
+
 .panel-nav-tab {
-    flex: 1; /* Ocupa espacio equitativo */
+    flex: 1;
+    /* Ocupa espacio equitativo */
     padding: 12px 10px;
     text-align: center;
     background: none;
@@ -254,32 +312,45 @@
     font-weight: 500;
     color: #495057;
     transition: background-color 0.2s ease, color 0.2s ease, border-bottom-color 0.2s ease;
-    border-bottom: 3px solid transparent; /* Borde inferior para indicar activo */
-    margin-bottom: -1px; /* Compensa el borde de .panel-navigation */
+    border-bottom: 3px solid transparent;
+    /* Borde inferior para indicar activo */
+    margin-bottom: -1px;
+    /* Compensa el borde de .panel-navigation */
 }
+
 .panel-nav-tab:hover {
     background-color: #e9ecef;
     color: #0056b3;
 }
+
 .panel-nav-tab.active {
-    color: #007bff; /* Color de pestaña activa */
-    border-bottom-color: #007bff; /* Borde inferior visible */
+    color: #007bff;
+    /* Color de pestaña activa */
+    border-bottom-color: #007bff;
+    /* Borde inferior visible */
     font-weight: 600;
 }
 
 /* Área donde se muestra el contenido de la pestaña activa */
 .panel-content-area {
     padding: 15px 20px;
-    overflow-y: auto; /* Scroll si el contenido excede max-height */
-    flex-grow: 1; /* Ocupa el espacio restante en el panel */
+    overflow-y: auto;
+    /* Scroll si el contenido excede max-height */
+    flex-grow: 1;
+    /* Ocupa el espacio restante en el panel */
 }
+
 /* Secciones de contenido (una por pestaña) */
 .panel-section {
-    display: none; /* Ocultas por defecto */
+    display: none;
+    /* Ocultas por defecto */
 }
+
 .panel-section.active {
-    display: block; /* La activa se muestra */
+    display: block;
+    /* La activa se muestra */
 }
+
 .panel-section h4 {
     margin-top: 0;
     margin-bottom: 15px;
@@ -287,6 +358,7 @@
     border-bottom: 1px solid #eee;
     padding-bottom: 8px;
 }
+
 .panel-section p {
     margin-bottom: 15px;
     font-size: 0.95em;
@@ -296,7 +368,8 @@
 /* --- Botones dentro del Panel FAB (Animaciones, Vista Interior, etc.) --- */
 /* --- DEFINICIÓN UNIFICADA Y CORREGIDA --- */
 .panel-button {
-    display: block; /* Ocupa todo el ancho disponible */
+    display: block;
+    /* Ocupa todo el ancho disponible */
     width: 100%;
     padding: 10px 15px;
     margin-bottom: 10px;
@@ -307,14 +380,18 @@
     border-radius: 5px;
     text-align: left;
     cursor: pointer;
-    opacity: 1; /* Opacidad completa por defecto */
-    transition: background-color 0.2s ease, opacity 0.3s ease; /* Transiciones suaves */
-    box-sizing: border-box; /* Asegura que padding no aumente el tamaño total */
+    opacity: 1;
+    /* Opacidad completa por defecto */
+    transition: background-color 0.2s ease, opacity 0.3s ease;
+    /* Transiciones suaves */
+    box-sizing: border-box;
+    /* Asegura que padding no aumente el tamaño total */
 }
 
 /* Estilo Hover para el estado HABILITADO */
 .panel-button:not(:disabled):hover {
-    background-color: #5a6268; /* Oscurecer al pasar el ratón SÓLO si no está deshabilitado */
+    background-color: #5a6268;
+    /* Oscurecer al pasar el ratón SÓLO si no está deshabilitado */
 }
 
 /* Último botón no necesita margen inferior */
@@ -325,8 +402,10 @@
 /* --- ESTILOS PARA EL ESTADO DESHABILITADO (SIN !important) --- */
 .panel-button:disabled,
 .panel-button[disabled] {
-    opacity: 0.5; /* Aspecto semi-transparente */
-    cursor: not-allowed; /* Cursor indica no usable */
+    opacity: 0.5;
+    /* Aspecto semi-transparente */
+    cursor: not-allowed;
+    /* Cursor indica no usable */
     /* Mantiene el color de fondo base, la opacidad ya lo atenúa */
     background-color: #6c757d;
     /* Evita interacciones como el hover cuando está deshabilitado */
@@ -335,11 +414,13 @@
 
 
 /* En fab-styles.css (como último recurso si la inspección revela un conflicto) */
-.fab-panel .panel-content-area > .panel-section {
+.fab-panel .panel-content-area>.panel-section {
     display: none;
 }
-.fab-panel .panel-content-area > .panel-section.active {
-    display: block; /* o flex si usas flexbox dentro de la sección */
+
+.fab-panel .panel-content-area>.panel-section.active {
+    display: block;
+    /* o flex si usas flexbox dentro de la sección */
 }
 
 /* resources/css/3d_experience/chat-styles.css */
@@ -349,70 +430,95 @@
     /* Ajustes específicos para la sección de chat si son necesarios */
     /* Por ejemplo, si necesitas que el contenido llene el espacio */
     flex-direction: column;
-    height: 100%; /* O ajusta según necesites dentro del panel */
+    height: 100%;
+    /* O ajusta según necesites dentro del panel */
 }
 
 #panel-section-chat #chatbox {
-    flex-grow: 1; /* Ocupa el espacio vertical disponible */
-    overflow-y: auto; /* Permite scroll si los mensajes exceden el espacio */
-    padding: 10px 0; /* Espaciado vertical, sin padding lateral aquí */
-    margin-bottom: 15px; /* Espacio antes del formulario */
+    flex-grow: 1;
+    /* Ocupa el espacio vertical disponible */
+    overflow-y: auto;
+    /* Permite scroll si los mensajes exceden el espacio */
+    padding: 10px 0;
+    /* Espaciado vertical, sin padding lateral aquí */
+    margin-bottom: 15px;
+    /* Espacio antes del formulario */
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Espacio entre contenedores de mensajes */
+    gap: 12px;
+    /* Espacio entre contenedores de mensajes */
 }
 
 /* Contenedor general para cada mensaje (ayuda a alinear) */
 .message-container {
     display: flex;
-    max-width: 95%; /* Evita que el contenedor ocupe todo el ancho */
-    padding: 0 5px; /* Ligero padding lateral para que no pegue al borde */
+    max-width: 95%;
+    /* Evita que el contenedor ocupe todo el ancho */
+    padding: 0 5px;
+    /* Ligero padding lateral para que no pegue al borde */
 }
 
 /* Contenedores de mensajes del usuario alineados a la derecha */
 .user-message-container {
-    justify-content: flex-end; /* Alinea el contenido (la burbuja) a la derecha */
-    margin-left: auto; /* Empuja el contenedor a la derecha */
+    justify-content: flex-end;
+    /* Alinea el contenido (la burbuja) a la derecha */
+    margin-left: auto;
+    /* Empuja el contenedor a la derecha */
 }
 
 /* Contenedores de mensajes de la IA alineados a la izquierda */
 .ai-message-container {
-    justify-content: flex-start; /* Alinea el contenido (la burbuja) a la izquierda */
-    margin-right: auto; /* Empuja el contenedor a la izquierda */
+    justify-content: flex-start;
+    /* Alinea el contenido (la burbuja) a la izquierda */
+    margin-right: auto;
+    /* Empuja el contenedor a la izquierda */
 }
 
 /* Estilo base de la burbuja de mensaje */
 .message {
     padding: 10px 15px;
-    border-radius: 15px; /* Bordes redondeados */
+    border-radius: 15px;
+    /* Bordes redondeados */
     line-height: 1.4;
-    max-width: 80%; /* Ancho máximo de la burbuja */
-    word-wrap: break-word; /* Rompe palabras largas */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    max-width: 80%;
+    /* Ancho máximo de la burbuja */
+    word-wrap: break-word;
+    /* Rompe palabras largas */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* Sombra sutil */
 }
 
 /* Burbuja de mensaje del usuario */
 .user-message {
-    background-color: #007bff; /* Azul principal (como el FAB) */
+    background-color: #007bff;
+    /* Azul principal (como el FAB) */
     color: white;
-    border-bottom-right-radius: 5px; /* Ligera variación en esquina */
+    border-bottom-right-radius: 5px;
+    /* Ligera variación en esquina */
 }
 
 /* Burbuja de mensaje de la IA */
 .ai-message {
-    background-color: #e9ecef; /* Gris claro (como el hover de las pestañas) */
-    color: #343a40; /* Texto oscuro */
-    border-bottom-left-radius: 5px; /* Ligera variación en esquina */
+    background-color: #e9ecef;
+    /* Gris claro (como el hover de las pestañas) */
+    color: #343a40;
+    /* Texto oscuro */
+    border-bottom-left-radius: 5px;
+    /* Ligera variación en esquina */
 }
 
 /* Indicador "Escribiendo..." */
 .typing-indicator {
     font-style: italic;
-    color: #6c757d; /* Gris secundario */
-    padding: 8px 15px; /* Un poco menos de padding */
+    color: #6c757d;
+    /* Gris secundario */
+    padding: 8px 15px;
+    /* Un poco menos de padding */
 }
+
 .typing-indicator-container .ai-message.typing-indicator {
-    background-color: #f8f9fa; /* Fondo muy claro */
+    background-color: #f8f9fa;
+    /* Fondo muy claro */
     box-shadow: none;
 }
 
@@ -420,28 +526,42 @@
 /* Formulario de entrada del chat */
 #panel-section-chat #chat-form {
     display: flex;
-    gap: 10px; /* Espacio entre input y botón */
-    padding-top: 15px; /* Espacio sobre el formulario */
-    border-top: 1px solid #e0e0e0; /* Línea divisoria */
-    align-items: center; /* Centra verticalmente input y botón */
+    gap: 10px;
+    /* Espacio entre input y botón */
+    padding-top: 15px;
+    /* Espacio sobre el formulario */
+    border-top: 1px solid #e0e0e0;
+    /* Línea divisoria */
+    align-items: center;
+    /* Centra verticalmente input y botón */
 }
 
 #panel-section-chat #message-input {
-    flex-grow: 1; /* Ocupa el espacio restante */
+    flex-grow: 1;
+    /* Ocupa el espacio restante */
     padding: 10px 12px;
-    border: 1px solid #ced4da; /* Borde gris estándar */
-    border-radius: 20px; /* Input redondeado */
+    border: 1px solid #ced4da;
+    /* Borde gris estándar */
+    border-radius: 20px;
+    /* Input redondeado */
     font-size: 0.95em;
-    outline: none; /* Quita el borde de foco por defecto */
+    outline: none;
+    /* Quita el borde de foco por defecto */
     transition: border-color 0.2s ease;
 }
+
 #panel-section-chat #message-input:focus {
-    border-color: #86b7fe; /* Borde azul al enfocar (similar a Bootstrap) */
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra de foco */
+    border-color: #86b7fe;
+    /* Borde azul al enfocar (similar a Bootstrap) */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    /* Sombra de foco */
 }
+
 #panel-section-chat #message-input::placeholder {
-    color: #6c757d; /* Color del placeholder */
-    opacity: 1; /* Asegura visibilidad en Firefox */
+    color: #6c757d;
+    /* Color del placeholder */
+    opacity: 1;
+    /* Asegura visibilidad en Firefox */
 }
 
 /* Contenedor de controles (si solo tiene el botón de enviar) */
@@ -451,31 +571,42 @@
 
 /* Botón de enviar */
 #panel-section-chat #send-button {
-    flex-shrink: 0; /* Evita que el botón se encoja */
-    background-color: #007bff; /* Mismo azul que el FAB y mensaje user */
+    flex-shrink: 0;
+    /* Evita que el botón se encoja */
+    background-color: #007bff;
+    /* Mismo azul que el FAB y mensaje user */
     color: white;
     border: none;
-    border-radius: 50%; /* Botón circular */
-    width: 40px; /* Tamaño fijo */
-    height: 40px; /* Tamaño fijo */
-    font-size: 16px; /* Tamaño del icono */
+    border-radius: 50%;
+    /* Botón circular */
+    width: 40px;
+    /* Tamaño fijo */
+    height: 40px;
+    /* Tamaño fijo */
+    font-size: 16px;
+    /* Tamaño del icono */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
+
 #panel-section-chat #send-button:hover:not(:disabled) {
-    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+    background-color: #0056b3;
+    /* Azul más oscuro al pasar el ratón */
 }
+
 #panel-section-chat #send-button:active:not(:disabled) {
-    transform: scale(0.95); /* Efecto de pulsación */
+    transform: scale(0.95);
+    /* Efecto de pulsación */
 }
 
 /* Estilos para el botón deshabilitado */
 #panel-section-chat #send-button:disabled,
 #panel-section-chat #send-button[disabled] {
-    background-color: #6c757d; /* Gris cuando está deshabilitado */
+    background-color: #6c757d;
+    /* Gris cuando está deshabilitado */
     opacity: 0.6;
     cursor: not-allowed;
 }
@@ -483,7 +614,8 @@
 /* Estilos para input deshabilitado */
 #panel-section-chat #message-input:disabled,
 #panel-section-chat #message-input[disabled] {
-    background-color: #e9ecef; /* Fondo gris claro */
+    background-color: #e9ecef;
+    /* Fondo gris claro */
     opacity: 0.7;
     cursor: not-allowed;
 }
@@ -492,50 +624,64 @@
 #panel-section-chat #chatbox::-webkit-scrollbar {
     width: 6px;
 }
+
 #panel-section-chat #chatbox::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
 }
+
 #panel-section-chat #chatbox::-webkit-scrollbar-thumb {
     background: #ccc;
     border-radius: 3px;
 }
+
 #panel-section-chat #chatbox::-webkit-scrollbar-thumb:hover {
     background: #aaa;
 }
+
 /* Añadido para chat-styles.css */
 
 /* Contenedor para el título y el botón mute */
 .chat-header {
     display: flex;
-    justify-content: space-between; /* Alinea título a la izquierda, botón a la derecha */
-    align-items: center; /* Centra verticalmente */
-    margin-bottom: 10px; /* Espacio debajo del header */
-    padding-right: 5px; /* Evita que el botón pegue al borde */
+    justify-content: space-between;
+    /* Alinea título a la izquierda, botón a la derecha */
+    align-items: center;
+    /* Centra verticalmente */
+    margin-bottom: 10px;
+    /* Espacio debajo del header */
+    padding-right: 5px;
+    /* Evita que el botón pegue al borde */
 }
 
 .chat-header h4 {
-    margin: 0; /* Quita margen por defecto del h4 */
+    margin: 0;
+    /* Quita margen por defecto del h4 */
 }
 
 /* Estilo del botón de mute/unmute */
 .chat-mute-button {
     background: none;
     border: none;
-    color: #555; /* Color del icono */
+    color: #555;
+    /* Color del icono */
     cursor: pointer;
-    font-size: 1.1em; /* Tamaño del icono */
+    font-size: 1.1em;
+    /* Tamaño del icono */
     padding: 5px;
-    line-height: 1; /* Ajuste para centrar icono si es necesario */
+    line-height: 1;
+    /* Ajuste para centrar icono si es necesario */
     transition: color 0.2s ease;
 }
 
 .chat-mute-button:hover {
-    color: #007bff; /* Color al pasar el ratón */
+    color: #007bff;
+    /* Color al pasar el ratón */
 }
 
 .chat-mute-button i {
-    display: block; /* Asegura que el icono ocupe su espacio */
+    display: block;
+    /* Asegura que el icono ocupe su espacio */
 }
 
 /* Ajustes al área del chat para acomodar el header si es necesario */
@@ -543,7 +689,8 @@
     /* Si el chatbox tenía una altura fija, puede que necesites ajustarla */
     /* Ejemplo: height: calc(100% - 120px); si antes era 100% - 90px */
     /* Asegúrate de que sigue funcionando bien en tu layout */
-    max-height: 300px; /* O la altura que prefieras */
+    max-height: 300px;
+    /* O la altura que prefieras */
     overflow-y: auto;
     /* ... otros estilos existentes ... */
 }
@@ -551,6 +698,85 @@
 /* Estilos del formulario (sin cambios necesarios normalmente) */
 #panel-section-chat #chat-form {
     /* ... estilos existentes ... */
-    margin-top: 10px; /* Añadir espacio sobre el formulario */
+    margin-top: 10px;
+    /* Añadir espacio sobre el formulario */
 }
 
+/* El overlay sólo oscurece, sin centrar nada */
+.panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    /* seguirá controlándose con la clase .open */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+}
+
+.panel-overlay.open {
+    pointer-events: all;
+    opacity: 1;
+}
+
+/* Sitúa la tarjeta en la esquina izquierda, un poco abajo */
+.panel-card {
+    position: fixed;
+    top: 20%;
+    /* 20% desde arriba */
+    left: 10%;
+    /* 10% desde la izquierda */
+    width: 320px;
+    max-width: 90%;
+    transform: none;
+    /* elimina el pop-in centrándolo */
+    animation: pop-in 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+@keyframes pop-in {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Close button */
+.panel-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #bbb;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.panel-close:hover {
+    color: #fff;
+}
+
+/* Imagen */
+.panel-card img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+/* Descripción */
+.panel-card p {
+    color: #eee;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+}
