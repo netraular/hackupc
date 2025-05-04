@@ -1,11 +1,9 @@
 // public/js/3d_experience/chatIntegration.js
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- Verificación de que estamos en la página correcta ---
     const chatSection = document.getElementById('panel-section-chat');
     if (!chatSection) {
-        // console.log("Sección de chat no encontrada. Script de chat no inicializado.");
-        return;
+        return; // Silencioso si no está la sección
     }
 
     const chatbox = chatSection.querySelector('#chatbox');
@@ -33,12 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
         messageInput.placeholder = "Chat deshabilitado (configuración faltante)";
         return;
     }
-    console.log("CHAT_TTS_LOG: Configuración cargada:", { chatSendUrl, ttsSynthesizeUrl, csrfToken: '******' }); // No loguear token completo
-
+    console.log("CHAT_TTS_LOG: Configuración cargada:", { chatSendUrl, ttsSynthesizeUrl, csrfToken: '******' });
 
     // --- Estado del Chat y TTS ---
     let isMuted = false;
-    let currentAudio = null; // Para manejar la reproducción de audio
+    let currentAudio = null;
 
     // --- Funciones del Chat (sin cambios) ---
     function addMessage(text, sender = 'user') {
@@ -47,12 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message');
         messageDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-        messageDiv.textContent = text;
+        messageDiv.textContent = text; // Usar textContent es más seguro que innerHTML
         messageContainer.appendChild(messageDiv);
         chatbox.appendChild(messageContainer);
         scrollToBottom();
     }
     function scrollToBottom() {
+        // Da un pequeño respiro para que el DOM se actualice antes de hacer scroll
         setTimeout(() => { if(chatbox) chatbox.scrollTop = chatbox.scrollHeight; }, 50);
     }
     function showTypingIndicator(show = true) {
@@ -63,7 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicator.classList.add('message-container', 'ai-message-container', 'typing-indicator-container');
                 const indicatorBubble = document.createElement('div');
                 indicatorBubble.classList.add('message', 'ai-message', 'typing-indicator');
-                indicatorBubble.textContent = 'Thinking...';
+                // Contenido simple para el indicador
+                indicatorBubble.innerHTML = '<span>.</span><span>.</span><span>.</span>'; // CSS se encargará de animar
                 indicator.appendChild(indicatorBubble);
                 chatbox.appendChild(indicator);
                 scrollToBottom();
@@ -72,132 +71,137 @@ document.addEventListener('DOMContentLoaded', () => {
             if (indicator) indicator.remove();
         }
     }
-    function setControlsEnabled(enabled) {
-        messageInput.disabled = !enabled;
-        messageInput.style.opacity = enabled ? 1 : 0.6;
-        sendButton.disabled = !enabled;
-        sendButton.style.opacity = enabled ? 1 : 0.6;
+     function setControlsEnabled(enabled) {
+        if(messageInput) messageInput.disabled = !enabled;
+        if(messageInput) messageInput.style.opacity = enabled ? 1 : 0.6;
+        if(sendButton) sendButton.disabled = !enabled;
+        if(sendButton) sendButton.style.opacity = enabled ? 1 : 0.6;
+        if (!enabled && messageInput) messageInput.blur(); // Quitar foco si se deshabilita
     }
 
     // --- Función para obtener y reproducir TTS ---
     async function fetchAndPlayTTS(text) {
-        console.log("CHAT_TTS_LOG: Entrando en fetchAndPlayTTS."); // <-- LOG INICIO FUNCIÓN
+        console.log("CHAT_TTS_LOG: Entrando en fetchAndPlayTTS.");
 
         if (isMuted) {
-            console.log("CHAT_TTS_LOG: TTS está muteado. Saltando reproducción."); // <-- LOG MUTEADO
+            console.log("CHAT_TTS_LOG: TTS está muteado. Saltando reproducción.");
             return;
         }
         if (!text || typeof text !== 'string' || text.trim().length === 0) {
-             console.log("CHAT_TTS_LOG: No hay texto válido para TTS. Texto recibido:", text); // <-- LOG TEXTO INVÁLIDO
+             console.log("CHAT_TTS_LOG: No hay texto válido para TTS. Texto recibido:", text);
              return;
         }
 
         console.log("CHAT_TTS_LOG: Deteniendo audio previo (si existe).");
-        stopCurrentAudio();
+        stopCurrentAudio(); // Detiene y limpia el audio anterior
 
         const textExcerpt = text.substring(0, 80) + (text.length > 80 ? "..." : "");
-        console.log(`CHAT_TTS_LOG: Solicitando TTS para: "${textExcerpt}"`); // <-- LOG TEXTO A SINTETIZAR
-
-        // Opcional: Mostrar un indicador de carga de audio
-        // showAudioLoadingIndicator(true);
+        console.log(`CHAT_TTS_LOG: Solicitando TTS para: "${textExcerpt}"`);
 
         try {
-            console.log(`CHAT_TTS_LOG: Haciendo fetch a TTS API: ${ttsSynthesizeUrl}`); // <-- LOG ANTES DE FETCH
+            console.log(`CHAT_TTS_LOG: Haciendo fetch a TTS API: ${ttsSynthesizeUrl}`);
             const response = await fetch(ttsSynthesizeUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    'Accept': 'application/json', // Esperamos JSON con base64
                     'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({ text: text })
             });
 
-            console.log(`CHAT_TTS_LOG: Respuesta recibida de TTS API. Status: ${response.status}`); // <-- LOG STATUS RESPUESTA
-
-            // showAudioLoadingIndicator(false);
+            console.log(`CHAT_TTS_LOG: Respuesta recibida de TTS API. Status: ${response.status}`);
 
             if (!response.ok) {
-                 let errorData = {};
+                 let errorDetails = `Error ${response.status}`;
                  try {
-                     errorData = await response.json();
-                     console.error(`CHAT_TTS_LOG: Error en TTS API (${response.status}). Respuesta JSON:`, errorData); // <-- LOG ERROR JSON
+                     const errorData = await response.json();
+                     errorDetails += `: ${errorData.message || JSON.stringify(errorData)}`;
+                     console.error(`CHAT_TTS_LOG: Error en TTS API. Respuesta JSON:`, errorData);
                  } catch (e) {
                      const errorText = await response.text();
-                     console.error(`CHAT_TTS_LOG: Error en TTS API (${response.status}). No se pudo parsear JSON. Respuesta Texto:`, errorText); // <-- LOG ERROR TEXTO
+                     errorDetails += `: ${errorText || 'No details'}`;
+                     console.error(`CHAT_TTS_LOG: Error en TTS API. No se pudo parsear JSON. Respuesta Texto:`, errorText);
                  }
                 // No mostramos error en el chat, solo log
                 return;
             }
 
             const result = await response.json();
-            console.log("CHAT_TTS_LOG: Respuesta TTS parseada correctamente."); // <-- LOG PARSEO OK
+            console.log("CHAT_TTS_LOG: Respuesta TTS parseada correctamente.");
 
             if (result.audio_base64) {
-                console.log(`CHAT_TTS_LOG: audio_base64 recibido (longitud: ${result.audio_base64.length}). MimeType: ${result.mime_type}`); // <-- LOG BASE64 OK
+                console.log(`CHAT_TTS_LOG: audio_base64 recibido (longitud: ${result.audio_base64.length}). MimeType: ${result.mime_type}`);
                 const audioDataUrl = `data:${result.mime_type || 'audio/mpeg'};base64,${result.audio_base64}`;
-                // console.log("CHAT_TTS_LOG: Audio Data URL creada:", audioDataUrl.substring(0, 100) + "..."); // <-- LOG DATA URL (puede ser muy larga)
 
-                currentAudio = new Audio(audioDataUrl);
-                console.log("CHAT_TTS_LOG: Objeto Audio creado."); // <-- LOG AUDIO OBJECT CREADO
+                // Crear un nuevo objeto Audio
+                const audioPlayer = new Audio(audioDataUrl);
+                currentAudio = audioPlayer; // Guardar referencia globalmente
+                console.log("CHAT_TTS_LOG: Objeto Audio creado.");
 
-                currentAudio.addEventListener('canplaythrough', () => {
-                    console.log("CHAT_TTS_LOG: Evento 'canplaythrough' recibido. Listo para reproducir."); // <-- LOG LISTO PARA PLAY
+                // Setup listeners para el nuevo audioPlayer
+                audioPlayer.addEventListener('canplaythrough', () => {
+                    console.log("CHAT_TTS_LOG: Evento 'canplaythrough'. Listo para reproducir.");
+                }, { once: true }); // Escuchar solo una vez
+
+                audioPlayer.addEventListener('ended', () => {
+                    console.log("CHAT_TTS_LOG: Evento 'ended'. Reproducción TTS finalizada.");
+                    if (currentAudio === audioPlayer) { // Solo limpiar si es el audio actual
+                        currentAudio = null;
+                    }
+                }, { once: true });
+
+                audioPlayer.addEventListener('error', (e) => {
+                    console.error("CHAT_TTS_LOG: Evento 'error' en el objeto Audio:", e);
+                    if (currentAudio === audioPlayer) {
+                        currentAudio = null;
+                    }
+                }, { once: true });
+
+                audioPlayer.addEventListener('pause', () => {
+                    console.log("CHAT_TTS_LOG: Evento 'pause' en el objeto Audio.");
+                });
+                 audioPlayer.addEventListener('stalled', () => {
+                    console.warn("CHAT_TTS_LOG: Evento 'stalled'. Problema cargando datos?");
                 });
 
-                currentAudio.addEventListener('ended', () => {
-                    console.log("CHAT_TTS_LOG: Evento 'ended'. Reproducción TTS finalizada."); // <-- LOG FIN REPRODUCCIÓN
-                    currentAudio = null; // Liberar referencia
-                });
-                currentAudio.addEventListener('error', (e) => {
-                    console.error("CHAT_TTS_LOG: Evento 'error' en el objeto Audio:", e); // <-- LOG ERROR AUDIO ELEMENT
-                    currentAudio = null; // Liberar referencia en caso de error
-                });
-                currentAudio.addEventListener('pause', () => {
-                    console.log("CHAT_TTS_LOG: Evento 'pause' en el objeto Audio."); // <-- LOG PAUSA AUDIO
-                });
-                 currentAudio.addEventListener('stalled', () => {
-                    console.warn("CHAT_TTS_LOG: Evento 'stalled' en el objeto Audio. Problema cargando datos?"); // <-- LOG STALLED
-                });
-
-
-                // Intenta reproducir y captura errores específicos de play()
+                // Intenta reproducir
                 try {
-                     console.log("CHAT_TTS_LOG: Llamando a currentAudio.play()..."); // <-- LOG ANTES DE PLAY
-                     await currentAudio.play();
-                     console.log("CHAT_TTS_LOG: Reproducción iniciada (promesa resuelta)."); // <-- LOG PLAY INICIADO
+                     console.log("CHAT_TTS_LOG: Llamando a audioPlayer.play()...");
+                     await audioPlayer.play();
+                     console.log("CHAT_TTS_LOG: Reproducción iniciada (promesa resuelta).");
                 } catch (playError) {
-                    console.error("CHAT_TTS_LOG: Error al llamar a play():", playError); // <-- LOG ERROR EN PLAY
-                     // Posibles causas: interacción del usuario no detectada, política del navegador, etc.
-                     // Podríamos intentar mostrar un botón de "Reproducir" aquí si falla automáticamente.
-                     currentAudio = null; // Limpiar si no se pudo reproducir
+                    console.error("CHAT_TTS_LOG: Error al llamar a play():", playError);
+                    if (currentAudio === audioPlayer) { // Limpiar si falló la reproducción
+                         currentAudio = null;
+                    }
+                    // Considerar mostrar un mensaje al usuario o un botón de reintentar si esto ocurre a menudo
                 }
 
             } else {
-                console.error("CHAT_TTS_LOG: Respuesta TTS OK pero sin 'audio_base64'. Resultado:", result); // <-- LOG SIN BASE64
+                console.error("CHAT_TTS_LOG: Respuesta TTS OK pero sin 'audio_base64'. Resultado:", result);
             }
 
         } catch (error) {
-            console.error('CHAT_TTS_LOG: Error en el bloque try/catch de fetchAndPlayTTS:', error); // <-- LOG ERROR FETCH/GENERAL
-            // showAudioLoadingIndicator(false);
+            console.error('CHAT_TTS_LOG: Error en el bloque try/catch de fetchAndPlayTTS:', error);
+             if (currentAudio) { // Asegurarse de limpiar si hubo un error durante el fetch
+                stopCurrentAudio();
+            }
         }
     }
 
     // --- Función para detener el audio actual ---
     function stopCurrentAudio() {
         if (currentAudio) {
-            console.log("CHAT_TTS_LOG: stopCurrentAudio() - Deteniendo y limpiando audio actual."); // <-- LOG STOP AUDIO
+            console.log("CHAT_TTS_LOG: stopCurrentAudio() - Deteniendo y limpiando audio actual.");
             currentAudio.pause();
-            currentAudio.src = ''; // Descarga el recurso
-            // Eliminar listeners para evitar fugas de memoria
-            currentAudio.removeEventListener('canplaythrough', null);
-            currentAudio.removeEventListener('ended', null);
-            currentAudio.removeEventListener('error', null);
-            currentAudio.removeEventListener('pause', null);
-            currentAudio.removeEventListener('stalled', null);
-            currentAudio = null;
+            currentAudio.removeAttribute('src'); // Forma más segura de limpiar
+            currentAudio.load(); // Detiene la descarga
+            // Quitar listeners explícitamente ya no es estrictamente necesario si la referencia se pierde,
+            // pero no hace daño ser explícito si se reutilizara el objeto (aquí no lo hacemos).
+            currentAudio = null; // Eliminar la referencia global
         } else {
-             // console.log("CHAT_TTS_LOG: stopCurrentAudio() - No hay audio actual para detener."); // Log opcional
+            // console.log("CHAT_TTS_LOG: stopCurrentAudio() - No hay audio actual para detener.");
         }
     }
 
@@ -208,13 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageText = messageInput.value.trim();
         if (!messageText) return;
 
-        console.log("CHAT_TTS_LOG: Formulario enviado. Mensaje:", messageText); // <-- LOG ENVÍO FORM
+        console.log("CHAT_TTS_LOG: Formulario enviado. Mensaje:", messageText);
         setControlsEnabled(false);
         addMessage(messageText, 'user');
         messageInput.value = '';
         showTypingIndicator(true);
-        console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() desde submit handler."); // <-- LOG STOP ANTES DE ENVIAR
-        stopCurrentAudio();
+        console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() desde submit handler.");
+        stopCurrentAudio(); // Detener TTS si estaba hablando antes de enviar nuevo mensaje
 
         const dataToSend = JSON.stringify({ message: messageText });
         const headers = {
@@ -223,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'X-CSRF-TOKEN': csrfToken
         };
 
-        console.log("CHAT_TTS_LOG: Llamando a sendData()."); // <-- LOG LLAMADA SENDDATA
+        console.log("CHAT_TTS_LOG: Llamando a sendData().");
         await sendData(dataToSend, headers);
     });
 
@@ -249,70 +253,107 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("CHAT_TTS_LOG: Error parseando JSON de Chat API:", e);
                 const responseText = await response.text();
                 console.error("CHAT_TTS_LOG: Respuesta Texto Chat API:", responseText);
-                // Usa la clave 'reply' si el backend la envió en el error, sino un mensaje genérico
-                responseData = { error: `Error ${response.status}: Invalid response from server.`, reply: `Sorry, I received an invalid response (Status ${response.status}).` };
+                // Prepara un objeto de error simulando la estructura esperada
+                responseData = { error: `Error ${response.status}: Invalid JSON response.`, reply: `Sorry, I received an invalid response (Status ${response.status}). Please check server logs.` };
             }
 
-            // ----- MODIFICACIÓN AQUÍ -----
-            // Antes comprobaba response.ok && responseData.reply
-            // Ahora comprobamos response.ok y si existe la clave 'message'
+            // ----- PROCESAMIENTO DE RESPUESTA EXITOSA O CON ERROR CONTROLADO -----
             if (response.ok && responseData.message) {
-                const aiMessageText = responseData.message; // <-- Extraer de 'message'
-                const aiAnimationsData = responseData.animations; // <-- Extraer 'animations'
+                // *** CASO ÉXITO ***
+                const aiMessageText = responseData.message;
+                const aiAnimationsData = responseData.animations; // Esperamos string JSON: "[1,3]" o "[]" o null
+                const aiPhotoData = responseData.photo; // Obtener la clave 'photo'
 
                 console.log("CHAT_TTS_LOG: Respuesta AI (mensaje) recibida:", aiMessageText);
-                console.log("CHAT_TTS_LOG: Respuesta AI (animaciones) recibida:", aiAnimationsData);
+                console.log("CHAT_TTS_LOG: Respuesta AI (animaciones string):", aiAnimationsData);
+                console.log("CHAT_TTS_LOG: Respuesta AI (photo string):", aiPhotoData); // <--- AÑADIDO: Log para 'photo'
 
-                addMessage(aiMessageText, 'ai'); // <-- Usar el texto del mensaje
-
-                // --- Procesar animaciones (si existen y son válidas) ---
-                if (aiAnimationsData) {
-                    try {
-                        // La respuesta del log muestra que 'animations' es una *cadena* "[]"
-                        // Necesitamos parsearla para obtener un array JS
-                        const animationsArray = JSON.parse(aiAnimationsData);
-                        console.log("CHAT_TTS_LOG: [ANIMATIONS] animationsArray (parsed):", animationsArray);
-
-                        console.log("CHAT_TTS_LOG: Animaciones parseadas:", animationsArray);
-                        if (Array.isArray(animationsArray) && animationsArray.length > 0) {
-                            // AQUÍ: Lógica para disparar las animaciones basadas en 'animationsArray'
-                            // Por ejemplo: dispatchAnimationEvent(animationsArray);
-                             console.log("CHAT_TTS_LOG: ¡Se recibieron animaciones para ejecutar!", animationsArray);
-                             // TODO: Implementar la lógica para ejecutar estas animaciones
-                        } else {
-                           console.log("CHAT_TTS_LOG: El array de animaciones está vacío o no es un array válido.");
-                        }
-                    } catch (parseError) {
-                        console.error("CHAT_TTS_LOG: Error parseando la cadena de animaciones JSON:", parseError, "Data:", aiAnimationsData);
-                    }
+                let dataJson = null; // Inicializa por si falla
+                try {
+                    // Intenta parsear la cadena JSON que viene en aiPhotoData
+                    dataJson = JSON.parse(aiPhotoData);
+                    console.log("CHAT_TTS_LOG: Respuesta AI (photo JSON parseado):", dataJson);
+                    // Aquí puedes procesar el JSON de la foto como necesites
+                    // Por ejemplo, podrías mostrar la foto en el chat si dataJson tiene una URL
+                    // if (dataJson && dataJson.url) { /* mostrar imagen */ }
+                
+                } catch (e) {
+                    console.error("CHAT_TTS_LOG: Error al parsear la cadena JSON de 'photo':", e);
+                    console.error("CHAT_TTS_LOG: Cadena recibida en 'photo':", aiPhotoData);
+                    // Opcional: Informar al usuario o manejar el error de otra forma
                 }
 
-                // --- LLAMAR A TTS CON EL TEXTO DEL MENSAJE ---
-                console.log("CHAT_TTS_LOG: Llamando a fetchAndPlayTTS() desde sendData() con la respuesta AI.");
-                await fetchAndPlayTTS(aiMessageText); // <-- Usar el texto del mensaje
-                // --------------------------------------------------
+
+                addMessage(aiMessageText, 'ai');
+
+                // --- Procesar animaciones (SI EXISTEN) ---
+                if (aiAnimationsData && typeof aiAnimationsData === 'string') {
+                    console.log("CHAT_TTS_LOG: [ANIMATIONS] Procesando cadena de animación:", aiAnimationsData);
+                    try {
+                        const animationsArray = JSON.parse(aiAnimationsData);
+                        console.log("CHAT_TTS_LOG: [ANIMATIONS] Cadena parseada a array:", animationsArray);
+
+                        if (Array.isArray(animationsArray) && animationsArray.length > 0) {
+                            const firstAnimationIndex = animationsArray[0]; // Tomar el primer índice
+
+                            // Validar que sea un número
+                            if (typeof firstAnimationIndex === 'number' && Number.isInteger(firstAnimationIndex) && firstAnimationIndex >= 0) { // Mejor validación
+                                console.log(`%cCHAT_TTS_LOG: [ANIMATIONS] Índice de animación válido encontrado: ${firstAnimationIndex}`, 'color: orange; font-weight: bold;');
+
+                                // Verificar que la función global exista ANTES de llamarla
+                                if (typeof window.triggerCarAnimation === 'function') {
+                                    console.log(`CHAT_TTS_LOG: [ANIMATIONS] Llamando a window.triggerCarAnimation(${firstAnimationIndex})...`);
+                                    window.triggerCarAnimation(firstAnimationIndex); // ¡Llamada a la función de carExperience.js!
+                                    console.log(`CHAT_TTS_LOG: [ANIMATIONS] Llamada a window.triggerCarAnimation(${firstAnimationIndex}) realizada.`);
+                                } else {
+                                    console.warn("CHAT_TTS_LOG: [ANIMATIONS] La función window.triggerCarAnimation NO está disponible. Asegúrate de que carExperience.js se cargó y expuso la función correctamente.");
+                                    addMessage("[Error interno: No se pudo ejecutar la animación]", 'ai'); // Informar discretamente
+                                }
+                            } else {
+                                console.warn("CHAT_TTS_LOG: [ANIMATIONS] El primer elemento del array ('"+ firstAnimationIndex +"') no es un índice de animación válido (número entero no negativo).");
+                            }
+                        } else {
+                           console.log("CHAT_TTS_LOG: [ANIMATIONS] El array de animaciones parseado está vacío o no es un array.");
+                        }
+                    } catch (parseError) {
+                        console.error("CHAT_TTS_LOG: [ANIMATIONS] Error al parsear la cadena JSON de animaciones:", parseError, ". Cadena recibida:", aiAnimationsData);
+                        // No hacer nada más si el parseo falla, solo log
+                    }
+                } else {
+                    console.log("CHAT_TTS_LOG: [ANIMATIONS] No se recibió una cadena de animaciones válida.");
+                }
+                // --- FIN PROCESAR ANIMACIONES ---
+
+                // --- LLAMAR A TTS ---
+                console.log("CHAT_TTS_LOG: Llamando a fetchAndPlayTTS() con la respuesta AI.");
+                await fetchAndPlayTTS(aiMessageText);
+                // ---------------------
 
             } else {
-                // Si response.ok es true pero falta 'message', es un error de formato inesperado.
-                // Si response.ok es false, usamos el 'reply' o 'error' que el backend debería haber incluido.
-                const errorMessage = responseData?.reply || responseData?.error || `Error ${response.status}: Unexpected response format.`;
-                console.error("CHAT_TTS_LOG: Error en la respuesta de Chat API o formato inesperado:", errorMessage, responseData);
-                addMessage(`${errorMessage}`, 'ai'); // Mostrar el error al usuario
+                // *** CASO ERROR (Controlado por backend o fallo de red/parseo) ***
+                // Si response.ok es true pero falta 'message', es un error de formato inesperado del backend.
+                // Si response.ok es false, usamos el 'reply' o 'error' que el backend DEBERÍA haber incluido.
+                const errorMessage = responseData?.reply || responseData?.error || `Error ${response.status}: Unexpected response from server.`;
+                console.error("CHAT_TTS_LOG: Error en la respuesta de Chat API o formato inesperado:", errorMessage, "Data:", responseData);
+                addMessage(`${errorMessage}`, 'ai'); // Mostrar el error/reply del backend al usuario
                 console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error en Chat API.");
-                stopCurrentAudio();
+                stopCurrentAudio(); // Asegurar que no haya TTS sonando si hubo error
             }
-            // ----- FIN MODIFICACIÓN -----
+            // ----- FIN PROCESAMIENTO -----
 
-        } catch (error) {
+        } catch (networkError) {
+            // *** CASO ERROR DE RED (Fetch falló completamente) ***
             showTypingIndicator(false);
-            console.error('CHAT_TTS_LOG: Error en bloque try/catch de sendData (Fetch Error):', error);
-            addMessage('Error de conexión. Por favor, inténtalo de nuevo.', 'ai');
+            console.error('CHAT_TTS_LOG: Error de red en sendData (Fetch Error):', networkError);
+            addMessage('Error de conexión. Por favor, revisa tu conexión e inténtalo de nuevo.', 'ai');
             console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() debido a error de conexión.");
             stopCurrentAudio();
         } finally {
+            // Se ejecuta siempre, tanto en éxito como en error
             console.log("CHAT_TTS_LOG: Bloque finally de sendData. Habilitando controles.");
             setControlsEnabled(true);
-            if (messageInput) {
+            // Re-enfocar solo si los controles están habilitados y el input existe
+            if (messageInput && !messageInput.disabled) {
                 messageInput.focus();
             }
         }
@@ -321,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Manejo del Botón de Silencio/Activación ---
     function updateMuteButtonVisuals() {
          const icon = muteToggleButton.querySelector('i');
+         if (!icon) return; // Seguridad
          if (isMuted) {
              icon.classList.remove('fa-volume-high');
              icon.classList.add('fa-volume-xmark');
@@ -332,38 +374,44 @@ document.addEventListener('DOMContentLoaded', () => {
              muteToggleButton.title = "Silenciar audio";
              muteToggleButton.setAttribute('aria-label', "Silenciar audio");
          }
-         console.log("CHAT_TTS_LOG: Estado visual del botón mute actualizado. Muted:", isMuted); // <-- LOG ACTUALIZACIÓN VISUAL MUTE
+         // console.log("CHAT_TTS_LOG: Estado visual del botón mute actualizado. Muted:", isMuted); // Log opcional
     }
 
     muteToggleButton.addEventListener('click', () => {
         isMuted = !isMuted;
-        console.log("CHAT_TTS_LOG: Botón mute clickeado. Nuevo estado Muted:", isMuted); // <-- LOG CLICK MUTE
+        console.log("CHAT_TTS_LOG: Botón mute clickeado. Nuevo estado Muted:", isMuted);
         updateMuteButtonVisuals();
         if (isMuted) {
-             console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() desde el handler del botón mute (al silenciar)."); // <-- LOG STOP POR MUTE
-            stopCurrentAudio();
+             console.log("CHAT_TTS_LOG: Llamando a stopCurrentAudio() desde el handler del botón mute (al silenciar).");
+            stopCurrentAudio(); // Detener audio si se silencia
         }
-        // localStorage.setItem('ttsMuted', isMuted); // Descomentar si se usa localStorage
+        // Persistencia opcional:
+        // try { localStorage.setItem('ttsMuted', isMuted); } catch (e) { console.warn("No se pudo guardar estado mute en localStorage"); }
     });
 
     // --- Inicialización ---
-    // const savedMuteState = localStorage.getItem('ttsMuted');
-    // if (savedMuteState !== null) {
-    //     isMuted = savedMuteState === 'true';
-    //     console.log("CHAT_TTS_LOG: Estado mute cargado desde localStorage:", isMuted);
-    // }
+    // Cargar estado mute persistido (opcional)
+    // try {
+    //     const savedMuteState = localStorage.getItem('ttsMuted');
+    //     if (savedMuteState !== null) {
+    //         isMuted = savedMuteState === 'true';
+    //         console.log("CHAT_TTS_LOG: Estado mute cargado desde localStorage:", isMuted);
+    //     }
+    // } catch (e) { console.warn("No se pudo leer estado mute de localStorage"); }
+
     updateMuteButtonVisuals(); // Poner el icono correcto al inicio
 
-    if (messageInput) messageInput.focus();
-    scrollToBottom();
+    if (messageInput) messageInput.focus(); // Foco inicial
+    scrollToBottom(); // Asegurar que el mensaje inicial sea visible
 
-    console.log("CHAT_TTS_LOG: Script de integración del Chat con TTS inicializado correctamente y listeners adjuntos."); // <-- LOG FINAL INICIALIZACIÓN
+    console.log("CHAT_TTS_LOG: Script de integración del Chat con TTS inicializado correctamente y listeners adjuntos.");
 
-    // Opcional: Re-enfocar input cuando la pestaña del chat se activa
+    // Opcional: Re-enfocar input cuando la pestaña del chat se activa (si está en un panel con pestañas)
     const chatTab = document.querySelector('.panel-nav-tab[data-target="panel-section-chat"]');
     if(chatTab && messageInput) {
         chatTab.addEventListener('click', () => {
-            setTimeout(() => messageInput.focus(), 100);
+            // Pequeño delay para asegurar que el panel sea visible antes de enfocar
+            setTimeout(() => { if (!messageInput.disabled) messageInput.focus(); }, 100);
         });
     }
 
