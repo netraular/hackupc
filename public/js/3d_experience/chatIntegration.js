@@ -268,20 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("CHAT_TTS_LOG: Respuesta AI (animaciones string):", aiAnimationsData);
                 console.log("CHAT_TTS_LOG: Respuesta AI (photo string):", aiPhotoData); // <--- AÑADIDO: Log para 'photo'
 
-                let dataJson = null; // Inicializa por si falla
-                try {
-                    // Intenta parsear la cadena JSON que viene en aiPhotoData
-                    dataJson = JSON.parse(aiPhotoData);
-                    console.log("CHAT_TTS_LOG: Respuesta AI (photo JSON parseado):", dataJson);
-                    // Aquí puedes procesar el JSON de la foto como necesites
-                    // Por ejemplo, podrías mostrar la foto en el chat si dataJson tiene una URL
-                    // if (dataJson && dataJson.url) { /* mostrar imagen */ }
-                
-                } catch (e) {
-                    console.error("CHAT_TTS_LOG: Error al parsear la cadena JSON de 'photo':", e);
-                    console.error("CHAT_TTS_LOG: Cadena recibida en 'photo':", aiPhotoData);
-                    // Opcional: Informar al usuario o manejar el error de otra forma
-                }
 
 
                 addMessage(aiMessageText, 'ai');

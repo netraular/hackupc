@@ -28,8 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
         {
             name: "Alessandro La Conca",
             githubUser: "Calonca",
-            website: "#", // Cambia '#' por la URL real
+            website: "https://github.com/Calonca", // Cambia '#' por la URL real
             websiteText: "Sitio Web"
+        },
+        {
+            name: "Biene Hunt Minigame! Is this an easter egg?",
+            githubUser: "Egg",
+            website: "https://biene.photo/", // Cambia '#' por la URL real
+            websiteText: "Minigame Website"
         },
         // --- Añade más miembros aquí ---
         // {
