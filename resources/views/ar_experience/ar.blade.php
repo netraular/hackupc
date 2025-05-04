@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
+    <!-- Ensures proper rendering and touch zooming capabilities on mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- CSRF Token (If using Laravel) -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>AR Placement Autónomo (Cubo)</title>
+    <title>AR Experience with Chat</title>
 
-    <!-- Importar Three.js (como módulo desde CDN) -->
-    <!-- ESTO ESTÁ BIEN: El importmap le dice al navegador dónde encontrar 'three'
-         cuando tu script ar_experience1.js haga 'import * as THREE from 'three';' -->
+    <!-- Import map for Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -18,563 +18,440 @@
         }
     </script>
 
+    <!-- Styles for the application -->
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
-        canvas { display: block; }
-        #ar-button-container {
-            position: absolute;
-            bottom: 200px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-        }
-         #ar-button-container button {
-            padding: 12px 24px;
-            border: 1px solid #fff;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.4);
-            color: #fff;
-            font: 1.1em sans-serif;
-            cursor: pointer;
-         }
-         #ar-button-container button:hover {
-             background: rgba(255, 255, 255, 0.3);
-         }
-         #ar-button-container button:active {
-             background: rgba(255, 255, 255, 0.5);
-         }
-        #info {
-            position: absolute;
-            top: 10px;
-            width: 100%;
-            text-align: center;
-            z-index: 100;
-            color: white;
-            background-color: rgba(0,0,0,0.5);
-            padding: 10px 0;
-            font-family: sans-serif;
-            display: none; /* Oculto hasta entrar en AR */
-        }
-         .ar-error-message {
-             position: absolute;
-             top: 50%;
-             left: 50%;
-             transform: translate(-50%, -50%);
-             background-color: rgba(255, 255, 255, 0.9); /* Fondo más opaco */
-             color: #b94a48; /* Rojo oscuro */
-             padding: 20px;
-             border: 1px solid #d6e9c6;
-             border-radius: 5px;
-             font-family: sans-serif;
-             text-align: center;
-             z-index: 2000; /* Por encima de todo */
-             box-shadow: 0 0 10px rgba(0,0,0,0.5); /* Sombra suave */
-             max-width: 80%; /* Evitar que sea demasiado ancho */
-         }
-         :root {
+        /* --- Variables and Reset --- */
+        :root {
             --bg-color: #1a1a1a;
-            --button-bg: #2d2d2d;
-            --button-hover: #3d3d3d;
+            --ui-bg: #2d2d2d;
+            --ui-hover: #3d3d3d;
             --text-color: #ffffff;
-            --accent-color: #4CAF50;
-            --danger-color: #ff4444;
+            --accent-color: #4CAF50; /* Green */
+            --danger-color: #ff4444; /* Red */
+            --info-bg: rgba(0, 0, 0, 0.7); /* Darker info background */
+            --button-padding: 10px 15px;
+            --button-radius: 6px;
+            --ui-z-index: 10;
+            --ar-overlay-z-index: 1; /* Base AR overlay (touch capture) */
+            --ar-button-z-index: 5; /* Buttons inside AR overlay (close, animation) */
+            --ar-start-button-z-index: 100; /* Initial 'Start AR' button */
+            --ar-info-z-index: 90;
+            --error-z-index: 1001;
+            --settings-z-index: 1000;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Improves font rendering */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            height: 100%;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            /* Ensure full height and prevent scrolling/pull-to-refresh */
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            position: fixed; /* Prevents pull-to-refresh issues on mobile */
+        }
+
+        /* Default Three.js canvas (if created) should be behind UI */
+        canvas#three-canvas { /* Give your main canvas an ID if needed */
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* --- Main App UI (Non-AR) --- */
+        #app-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex; /* Use flex for main layout */
+            flex-direction: column; /* Stack elements vertically */
+            z-index: var(--ui-z-index);
+            /* Initially visible, fades out in AR mode */
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            pointer-events: auto; /* Enable interactions */
+        }
+
+        .ui-button {
+            background-color: var(--ui-bg);
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Softer border */
+            border-radius: var(--button-radius);
+            padding: var(--button-padding);
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+            position: absolute; /* Positioned within #app-ui */
+            z-index: calc(var(--ui-z-index) + 2); /* Above chat/visualizer */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+        }
+
+        .ui-button:hover {
+            background-color: var(--ui-hover);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .ui-button:active {
+            transform: scale(0.96); /* Slightly more noticeable press */
+        }
+
+        .top-left { top: 15px; left: 15px; }
+        .top-right { top: 15px; right: 15px; }
+
+        .ui-button.accent { border-color: var(--accent-color); color: var(--accent-color); }
+        .ui-button.danger { border-color: var(--danger-color); color: var(--danger-color); }
+        .ui-button.accent:hover { background-color: var(--accent-color); color: var(--text-color); }
+        .ui-button.danger:hover { background-color: var(--danger-color); color: var(--text-color); }
+
+        .settings-icon { padding: 8px 12px; font-size: 18px; }
+        .send-icon { font-size: 18px; width: 45px; text-align: center; padding: 10px 0; }
+        .mic-icon { font-size: 18px; width: 45px; text-align: center; padding: 10px 0; }
+        .mic-icon.active { background-color: var(--danger-color); border-color: var(--danger-color); color: var(--text-color); } /* Example active state */
+
+        .chat-history-area {
+            /* Take up space between top buttons and bottom area */
+            flex-grow: 1;
+            margin: 60px 15px 130px 15px; /* Top, R, Bottom, L margins */
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto; /* Enable scrolling for chat messages */
             display: flex;
             flex-direction: column;
-        }
-
-        .app-container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .disconnect-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background-color: var(--button-bg);
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .disconnect-btn:hover {
-            background-color: var(--danger-color);
-            color: var(--text-color);
-        }
-
-        .connect-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background-color: var(--button-bg);
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .connect-btn:hover {
-            background-color: var(--accent-color);
-            color: var(--text-color);
-        }
-
-        .mic-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--button-bg);
-            border: 2px solid var(--accent-color);
-            color: var(--text-color);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            z-index: 2;
-            position: absolute;
-            top: 100px;
-            right: 100px;
-        }
-
-        .camera-btn,
-        .screen-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background-color: var(--button-bg);
-            border: 2px solid var(--accent-color);
-            color: var(--text-color);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            z-index: 2;
-            position: absolute;
-            right: 25px;
-        }
-
-        .camera-btn {
-            bottom: 142px;
-        }
-
-        .screen-btn {
-            bottom: 82px;
-        }
-
-        .camera-btn:hover,
-        .screen-btn:hover {
-            background-color: var(--button-hover);
-            transform: scale(1.05);
-        }
-
-        .camera-btn.active,
-        .screen-btn.active {
-            background-color: var(--accent-color);
-        }
-
-        /* Media query for small devices */
-        @media screen and (max-width: 350px) {
-            .mic-btn {
-                top: 80px;
-            }
-            
-            .camera-btn {
-                bottom: 200px;
-            }
-            
-            .screen-btn {
-                bottom: 140px;
-            }
-        }
-
-        .mic-btn:hover {
-            background-color: var(--button-hover);
-            transform: scale(1.05);
-        }
-
-        .mic-btn.active {
-            background-color: var(--accent-color);
-        }
-
-        .mic-icon {
-            font-size: 16px;
-        }
-
-        .text-input-container {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 100px; /* Leave space for mic button */
-            display: flex;
             gap: 10px;
-            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: var(--ui-z-index);
+            /* Smooth scrolling on touch devices */
+            -webkit-overflow-scrolling: touch;
         }
 
-        .text-input {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
+        /* Chat message styling */
+        .chat-message { padding: 10px 15px; border-radius: 15px; max-width: 80%; word-wrap: break-word; line-height: 1.4; }
+        .user-message { background: #2c5282; color: white; align-self: flex-end; margin-left: 20%; border-bottom-right-radius: 5px; }
+        .model-message { background: #3f4a5c; color: white; align-self: flex-start; margin-right: 20%; border-bottom-left-radius: 5px; }
+        .model-message.streaming::after { content: '▋'; display: inline-block; animation: blink 1s step-end infinite; margin-left: 3px; vertical-align: baseline; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .audio-visualizer {
+            position: absolute;
+            bottom: 65px; /* Position above bottom controls */
+            left: 0;
+            width: 100%;
+            height: 60px; /* Height of the visualizer */
+            z-index: var(--ui-z-index);
+            pointer-events: none; /* Allow clicks through */
+        }
+
+        .bottom-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            right: 15px;
+            height: 45px; /* Consistent height for input/buttons */
+            display: flex;
+            align-items: center; /* Vertically align items */
+            gap: 10px;
+            z-index: calc(var(--ui-z-index) + 1);
+        }
+
+        .text-input-field {
+            flex-grow: 1; /* Take remaining horizontal space */
+            height: 100%;
+            padding: 10px 15px;
+            border-radius: var(--button-radius);
             border: 1px solid var(--accent-color);
-            background-color: var(--button-bg);
+            background-color: var(--ui-bg);
             color: var(--text-color);
             font-size: 16px;
             outline: none;
         }
-
-        .text-input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        .text-input-field:focus {
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
         }
 
-        .send-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background-color: var(--button-bg);
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            cursor: pointer;
+        /* Ensure bottom buttons don't have absolute positioning here */
+        .bottom-controls .ui-button {
+            position: relative; /* Override absolute positioning from .ui-button */
+            width: 45px; /* Fixed width */
+            height: 100%;
+            flex-shrink: 0; /* Prevent shrinking */
+            padding: 0; /* Reset padding */
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s ease;
         }
 
-        .send-btn:hover {
-            background-color: var(--accent-color);
-            color: var(--text-color);
-        }
+        /* --- AR Mode Specific Styles --- */
 
-        .visualizer {
+        /* Container for the initial 'Start AR' button */
+        #ar-button-container {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 200px;
-            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: var(--ar-start-button-z-index);
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            pointer-events: auto;
         }
-
-        .camera-preview {
-            position: absolute;
-            bottom: 100px;
-            left: 20px;
-            width: 240px; /* Default width */
-            height: 180px;
-            background-color: var(--button-bg);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 2;
-            display: none; /* Hidden by default */
-        }
-
-        .camera-preview video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .screen-preview {
-            position: absolute;
-            bottom: 300px;
-            left: 20px;
-            width: 240px;
-            height: 135px; /* 16:9 aspect ratio */
-            background-color: var(--button-bg);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 2;
-            display: none; /* Hidden by default */
-        }
-
-        .screen-preview video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Maintain aspect ratio without cropping */
-        }
-
-        /* Media query for devices with width less than 340px */
-        @media (max-width: 340px) {
-            .camera-preview {
-                width: 180px;
-                right: 25px;
-            }
-            .screen-preview {
-                width: 180px;
-                height: 101px; /* Maintain 16:9 aspect ratio */
-            }
-        }
-
-        .camera-switch-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+        /* Style the button generated *by* ARButton.js */
+        #ar-button-container button#ARButton {
+            padding: 12px 24px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.6); /* Slightly darker */
+            color: #fff;
+            font: bold 1.1em sans-serif; /* Bolder font */
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: background-color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #ar-button-container button#ARButton:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* AR Info Panel (Shown temporarily at session start) */
+        #ar-info-panel {
+            position: absolute;
+            top: 15px; /* Align with other top buttons */
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content; /* Fit content */
+            max-width: 90%; /* Prevent overflow */
+            text-align: center;
+            z-index: var(--ar-info-z-index);
             color: white;
-            font-size: 20px;
-            z-index: 1000;
-            transition: background-color 0.2s;
+            background-color: var(--info-bg);
+            padding: 8px 15px;
+            font-family: sans-serif;
+            font-size: 0.9em;
+            border-radius: 4px;
+            display: none; /* Hidden by default, shown via .ar-active */
+            pointer-events: none; /* Don't block interactions */
+            opacity: 0;
+            transition: opacity 0.4s ease 0.2s; /* Fade in slightly delayed */
         }
 
-        .camera-switch-btn:hover {
-            background: rgba(0, 0, 0, 0.7);
-        }
-
-        /* Hide on desktop */
-        @media (hover: hover) and (pointer: fine) {
-            .camera-switch-btn {
-                display: none;
-            }
-        }
-
-        .settings-btn {
-            position: absolute;
+        /* Styles for buttons CREATED BY YOUR JS inside the AR Overlay */
+        /* Example for the animation button */
+        button#animation1 {
+            /* Styles mostly applied in JS, ensure z-index is correct */
+            z-index: var(--ar-button-z-index) !important; /* Ensure it's above overlay */
+            position: absolute; /* Needed if not set in JS */
             top: 20px;
-            right: 20px;
-            padding: 10px;
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
+            left: 20px;
+            /* Add any other styles not covered in JS */
+             -webkit-tap-highlight-color: transparent;
+        }
+        /* Example targeting the default close button (SVG) created by ARButton.js */
+        /* This selector might be fragile, depends on ARButton.js output */
+        div[style*="display: block;"] > svg[width="38"] { /* Target overlay's SVG */
+            position: absolute !important; /* ARButton might use inline styles */
+            top: 15px !important;
+            right: 15px !important;
+            z-index: var(--ar-button-z-index) !important; /* Ensure it's above overlay */
             cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s ease;
-            z-index: 1000;
+             -webkit-tap-highlight-color: transparent;
         }
 
-        .settings-btn:hover {
-            background-color: var(--button-hover);
+
+        /* --- State Change: When AR is Active --- */
+        body.ar-active #app-ui {
+            opacity: 0;
+            visibility: hidden; /* Hide completely */
+            pointer-events: none; /* Disable interaction */
         }
 
-        .settings-dialog {
-            display: none;
-            position: fixed;
+        body.ar-active #ar-button-container {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            /* The actual 'STOP AR' button is inside the AR overlay now */
+        }
+
+        /* Show AR info panel when AR starts */
+        body.ar-active #ar-info-panel {
+            display: block; /* Make it visible */
+            opacity: 1;
+        }
+
+
+        /* --- Error Message Styling --- */
+        .ar-error-message {
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: var(--bg-color);
-            border: 1px solid var(--accent-color);
-            border-radius: 12px;
-            padding: 20px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 1001;
+            background-color: rgba(220, 53, 69, 0.9); /* Bootstrap danger-like */
+            color: white;
+            padding: 20px 25px;
+            border: 1px solid var(--danger-color);
+            border-radius: 5px;
+            font-family: sans-serif;
+            text-align: center;
+            z-index: var(--error-z-index);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            max-width: 85%;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .ar-error-message a {
+            color: #ffdddd;
+            text-decoration: underline;
+            font-weight: bold;
         }
 
-        .settings-dialog.active {
-            display: block;
-        }
 
+        /* --- Settings Dialog Styling (Optional) --- */
         .settings-overlay {
-            display: none;
+            display: none; /* Controlled by JS */
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+            z-index: calc(var(--settings-z-index) - 1);
         }
-
+        .settings-dialog {
+            display: none; /* Controlled by JS */
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--ui-bg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: var(--settings-z-index);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+        
+        /* Add rules for active class to show dialog */
         .settings-overlay.active {
             display: block;
         }
-
-        .settings-group {
-            margin-bottom: 20px;
+        .settings-dialog.active {
+            display: block;
         }
-
+        
+        /* Style settings groups */
+        .settings-group {
+            margin-bottom: 15px;
+        }
         .settings-group label {
             display: block;
-            margin-bottom: 8px;
-            color: var(--text-color);
+            margin-bottom: 5px;
+            font-weight: bold;
         }
-
-        .settings-group select,
-        .settings-group input {
+        .settings-group select {
             width: 100%;
             padding: 8px;
-            background-color: var(--button-bg);
-            border: 1px solid var(--accent-color);
+            background-color: var(--ui-bg);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 4px;
             color: var(--text-color);
         }
+        /* Add other .settings-* styles here if using the dialog */
 
-        .collapsible {
-            background-color: var(--button-bg);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            cursor: pointer;
+
+        /* --- Responsiveness --- */
+        @media screen and (max-width: 400px) {
+            .ui-button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+            .bottom-controls {
+                gap: 8px; /* Slightly reduce gap */
+                left: 10px;
+                right: 10px;
+            }
+            .text-input-field {
+                font-size: 15px; /* Slightly smaller font */
+            }
+            
+            #ar-info-panel {
+                 font-size: 0.85em;
+            }
         }
-
-        .collapsible-content {
-            display: none;
-            padding: 10px;
-        }
-
-        .collapsible-content.active {
-            display: block;
-        }
-
-        .settings-save-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--accent-color);
-            color: var(--text-color);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-
-        .settings-save-btn:hover {
-            opacity: 0.9;
-        }
-
-        .chat-history {
-            position: absolute;
-            top: 60px;
-            left: 20px;
-            right: 20px;
-            bottom: 120px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1;
-        }
-
-        .chat-message {
-            padding: 10px 15px;
-            border-radius: 15px;
-            max-width: 80%;
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-
-        .user-message {
-            background: #2c5282;
-            color: white;
-            align-self: flex-end;
-            margin-left: 20%;
-        }
-
-        .model-message {
-            background: #2d3748;
-            color: white;
-            align-self: flex-start;
-            margin-right: 20%;
-        }
-
-        .model-message.streaming::after {
-            content: '▋';
-            display: inline-block;
-            animation: blink 1s step-end infinite;
-            margin-left: 2px;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
 
     </style>
-    <!-- <link rel="stylesheet" href="{{ asset('css/styles.css') }}"> -->
 
+    <!-- Load AR Experience Script (make sure it contains all the logic) -->
     @vite('resources/js/ar/ar_experience.js')
+
 </head>
 <body>
-    <!-- Contenedor para el botón AR que generará ARButton.js -->
-    <div id="ar-button-container"></div>
-    
-    <!-- Info panel for AR instructions -->
-    <div id="info">Tap on a surface to place the object</div>
 
-    <!-- Mensaje de instrucciones -->
-    <div class="app-container">
-        <button id="disconnectBtn" class="disconnect-btn">Disconnect</button>
-        <button id="connectBtn" class="connect-btn" style="display: none;">Connect</button>
-        <button id="settingsBtn" class="settings-btn">⚙️</button>
-        <!-- <button id="cameraBtn" class="camera-btn">
-            <span class="camera-icon">📷</span>
-        </button>
-        <button id="screenBtn" class="screen-btn">
-            <span class="screen-icon">🖥️</span>
-        </button> -->
-        <div id="chatHistory" class="chat-history"></div>
-        <canvas id="visualizer" class="visualizer"></canvas>
-        <!-- <div id="cameraPreview" class="camera-preview"></div>
-        <div id="screenPreview" class="screen-preview"></div> -->
-        <button id="micBtn" class="mic-btn">
-            <span class="mic-icon">🎤</span>
-        </button>
-        <div class="text-input-container">
-            <input type="text" id="messageInput" placeholder="Type your message..." class="text-input">
-            <button id="sendBtn" class="send-btn">➤</button>
+    <!-- Main App Container (Hidden during AR) -->
+    <div id="app-ui">
+        <button id="disconnectBtn" class="ui-button top-left danger">Disconnect</button>
+        <button id="connectBtn" class="ui-button top-left accent" style="display: none;">Connect</button>
+        <button id="settingsBtn" class="ui-button top-right settings-icon">⚙️</button>
+
+        <!-- Chat History Area -->
+
+        <!-- Audio Visualizer Canvas -->
+        <canvas id="visualizer" class="audio-visualizer"></canvas>
+
+        <!-- Bottom Input/Controls Area -->
+        <div class="bottom-controls">
+            <!-- <input type="text" id="messageInput" placeholder="Type message..." class="text-input-field"> -->
+            <!-- <button id="sendBtn" class="ui-button send-icon">➤</button> -->
+            <button id="micBtn" class="ui-button mic-icon">🎤</button>
         </div>
     </div>
+
+    <!-- AR Specific Elements -->
+    <!-- Container for the initial AR Button generated by ARButton.js -->
+    <div id="ar-button-container"></div>
+
+    <!-- Info panel shown at the start of AR session -->
+    <div id="ar-info-panel">Point at a surface, then tap to place the object</div>
+
+    <!-- Error messages related to AR support/permissions will be appended here by ARButton.js -->
+    <!-- (Styled by .ar-error-message) -->
+
+
+    <!-- Optional Settings Dialog Structure (Uncomment if needed) -->
     
-    <!-- Settings dialog -->
-    <!-- <div class="settings-overlay"></div>
+    <div class="settings-overlay"></div>
     <div class="settings-dialog">
+        <h2>Settings</h2>
         <div class="settings-group">
-            <h3>Device Settings</h3>
-            <div class="settings-group">
-                <label for="microphoneSelect">Microphone</label>
-                <select id="microphoneSelect"></select>
-            </div>
-            <div class="settings-group">
-                <label for="speakerSelect">Speaker</label>
-                <select id="speakerSelect"></select>
-            </div>
+            <label for="microphoneSelect">Microphone</label>
+            <select id="microphoneSelect"></select>
         </div>
-        <button class="settings-save-btn">Save Settings</button>
-    </div> -->
-    
+        <div class="settings-group">
+            <label for="speakerSelect">Speaker</label>
+            <select id="speakerSelect"></select>
+        </div>
+        <button class="settings-save-btn ui-button accent" style="position:relative; width:100%; margin-top:20px;">Save Settings</button>
+    </div>
+   
+
+    <!-- Load other scripts like the Gemini Chat script -->
     @vite('resources/js/gemini-2-live-api-demo/script.js')
-    <!-- <script type="module" src="js/script.js"></script> -->
 
 </body>
 </html>

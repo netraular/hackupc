@@ -10,6 +10,7 @@ use App\Http\Controllers\CarExperienceController;
 // --- Rutas para el Chat (Solo Texto) ---
 Route::get('/chat', [ChatController::class, 'index'])->name('chat.index'); // Muestra la vista del chat de texto
 Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send'); // Recibe texto y llama a n8n
+Route::post('/chat/stt-transcribe', [SttController::class, 'transcribeForChat'])->name('chat.stt.transcribe');
 // --- Fin Rutas Chat ---
 
 // --- Rutas para Prueba STT ---

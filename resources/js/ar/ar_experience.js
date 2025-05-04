@@ -253,16 +253,32 @@ function init() {
         doAnimation(3, clip[3], mixer);
     });
 
+    document.addEventListener('close_r_b_door', function() {
+        stopAnimationActual(clip[3], mixer);
+    });
+
     document.addEventListener('open_l_b_door', function() {
         doAnimation(2, clip[2], mixer);
+    });
+
+    document.addEventListener('close_l_b_door', function() {
+        stopAnimationActual(clip[2], mixer);
     });
 
     document.addEventListener('open_l_f_door', function() {
         doAnimation(0, clip[0], mixer);
     });
 
+    document.addEventListener('close_l_f_door', function() {
+        stopAnimationActual(clip[0], mixer);
+    });
+
     document.addEventListener('open_r_f_door', function() {
         doAnimation(1, clip[1], mixer);
+    });
+
+    document.addEventListener('close_r_f_door', function() {
+        stopAnimationActual(clip[1], mixer);
     });
 
     document.addEventListener('open-charger', function() {
@@ -271,6 +287,10 @@ function init() {
 
     document.addEventListener('open-roof', function() {
         doAnimation(6, clip[6], mixer);
+    });
+
+    document.addEventListener('close_roof', function() {
+        stopAnimationActual(clip[6], mixer);
     });
 
     document.addEventListener('open_l_wheels', function() {
@@ -288,7 +308,7 @@ function init() {
         }
         // Intentar obtener la acción
         try {
-             const action = localMixer.clipAction(animation);
+             action = localMixer.clipAction(animation);
              if (!action) {
                  console.warn("No se pudo crear la acción para la animación:", animation.name);
                  return;
@@ -470,62 +490,71 @@ function onTouchStart(event) {
 
     const touches = event.touches;
 
-    if (touches.length === 1) {
-        // Start Rotation
-        isDragging = true;
-        isPinching = false;
-        previousTouchX = touches[0].clientX;
-        event.preventDefault(); // Prevent browser scrolling/zooming
-    } else if (touches.length === 2) {
-        // Start Scaling
-        isPinching = true;
-        isDragging = false;
+    if (touches.length === 2) {
+        // Check if this is a pinch or rotation gesture
         const dx = touches[0].clientX - touches[1].clientX;
         const dy = touches[0].clientY - touches[1].clientY;
         initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
-        initialScale.copy(placedObject.scale); // Store the scale when pinch starts
-        event.preventDefault(); // Prevent browser zooming
+        
+        // Store initial position for rotation calculation
+        previousTouchX = (touches[0].clientX + touches[1].clientX) / 2;
+        
+        // We'll determine if it's a pinch or rotation in the move handler
+        isDragging = true;
+        isPinching = true;
+        
+        // Store initial scale
+        initialScale.copy(placedObject.scale);
+        
+        event.preventDefault(); // Prevent browser scrolling/zooming
+    } else {
+        // Not a two-finger gesture
+        isDragging = false;
+        isPinching = false;
     }
 }
-  function onTouchMove(event) {
+
+function onTouchMove(event) {
     if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
         return;
     }
 
     const touches = event.touches;
 
-    if (isDragging && touches.length === 1) {
-        // Rotate
-        const currentTouchX = touches[0].clientX;
-        const deltaX = currentTouchX - previousTouchX;
-        placedObject.rotation.y += deltaX * ROTATION_SPEED; // Rotate around Y axis
-        previousTouchX = currentTouchX;
-        event.preventDefault();
-    } else if (isPinching && touches.length === 2) {
-        // Scale
+    if (touches.length === 2) {
+        // Calculate current values
         const dx = touches[0].clientX - touches[1].clientX;
         const dy = touches[0].clientY - touches[1].clientY;
         const currentPinchDistance = Math.sqrt(dx * dx + dy * dy);
-
-        if (initialPinchDistance > 0) { // Avoid division by zero
+        const currentTouchX = (touches[0].clientX + touches[1].clientX) / 2;
+        
+        // Handle rotation (based on the midpoint of the two fingers)
+        if (isDragging) {
+            const deltaX = currentTouchX - previousTouchX;
+            placedObject.rotation.y += deltaX * ROTATION_SPEED;
+            previousTouchX = currentTouchX;
+        }
+        
+        // Handle scaling
+        if (isPinching && initialPinchDistance > 0) {
             const scaleFactor = currentPinchDistance / initialPinchDistance;
-            // Apply scale relative to the scale when the pinch started
             placedObject.scale.copy(initialScale).multiplyScalar(scaleFactor);
         }
+        
         event.preventDefault();
     }
 }
-  function onTouchEnd(event) {
+
+function onTouchEnd(event) {
     if (!placedObject || !placedObject.visible || !renderer.xr.isPresenting) {
-       return;
-   }
-   // Reset flags when touches end
-   if (event.touches.length < 2) {
-       isPinching = false;
-   }
-   if (event.touches.length < 1) {
-       isDragging = false;
-   }
+        return;
+    }
+    
+    // Reset flags when touches end
+    if (event.touches.length < 2) {
+        isDragging = false;
+        isPinching = false;
+    }
 }
 
 
@@ -595,6 +624,12 @@ function onSelect(event) {
     //     console.log('Ignoring onSelect because it came from animation button');
     //     return;
     // }
+    
+    // Don't place the object if we're currently dragging or pinching
+    if (isDragging || isPinching) {
+        console.log('Ignored object placement during rotation/scaling');
+        return;
+    }
     
     // Se llama al tocar la pantalla en modo AR
     if (reticle.visible && placedObject) {

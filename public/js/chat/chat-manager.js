@@ -42,7 +42,7 @@ export class ChatManager {
                 console.log('Chat history loaded from localStorage');
                 
                 // Populate UI with saved messages
-                this.renderSavedHistory();
+                // this.renderSavedHistory();
             } else {
                 this.chatHistory = [];
             }
@@ -53,26 +53,26 @@ export class ChatManager {
     }
 
     // Render saved chat history in the UI
-    renderSavedHistory() {
-        // Clear existing chat container first
-        this.chatContainer.innerHTML = '';
+    // renderSavedHistory() {
+    //     // Clear existing chat container first
+    //     this.chatContainer.innerHTML = '';
         
-        // Render each message from history
-        this.chatHistory.forEach(message => {
-            const messageDiv = document.createElement('div');
-            messageDiv.textContent = message.content;
+    //     // Render each message from history
+    //     this.chatHistory.forEach(message => {
+    //         const messageDiv = document.createElement('div');
+    //         messageDiv.textContent = message.content;
             
-            if (message.role === 'user') {
-                messageDiv.className = 'chat-message user-message';
-            } else {
-                messageDiv.className = 'chat-message model-message';
-            }
+    //         if (message.role === 'user') {
+    //             messageDiv.className = 'chat-message user-message';
+    //         } else {
+    //             messageDiv.className = 'chat-message model-message';
+    //         }
             
-            this.chatContainer.appendChild(messageDiv);
-        });
+    //         this.chatContainer.appendChild(messageDiv);
+    //     });
         
-        this.scrollToBottom();
-    }
+    //     this.scrollToBottom();
+    // }
 
     addUserMessage(text) {
         const messageDiv = document.createElement('div');

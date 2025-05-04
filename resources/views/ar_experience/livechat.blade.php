@@ -20,13 +20,13 @@
         <button id="micBtn" class="mic-btn">
             <span class="mic-icon">🎤</span>
         </button>
-        <div id="chatHistory" class="chat-history"></div>
+        <!-- <div id="chatHistory" class="chat-history"></div> -->
         <canvas id="visualizer" class="visualizer"></canvas>
         <div id="cameraPreview" class="camera-preview"></div>
         <div id="screenPreview" class="screen-preview"></div>
         <div class="text-input-container">
             <input type="text" id="messageInput" placeholder="Type your message..." class="text-input">
-            <button id="sendBtn" class="send-btn">➤</button>
+            <!-- <button id="sendBtn" class="send-btn">➤</button> -->
         </div>
     </div>
 

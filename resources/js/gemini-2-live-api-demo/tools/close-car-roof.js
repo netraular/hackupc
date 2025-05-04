@@ -1,14 +1,14 @@
 /**
  * CarTrunkTool - Triggers the 'open-car-trunk' event to animate the car trunk in AR mode
  */
-export class openCarLeftWheelsTool {
+export class closeCarRoofTool {
     /**
      * Returns the tool declaration for Gemini
      */
     getDeclaration() {
         return {
-            name: "openCarLeftWheelsTool",
-            description: "Show in detail the car Left Wheels in AR mode",
+            name: "closeCarRoofTool",
+            description: "Close the car roof",
         };
     }
 
@@ -19,9 +19,9 @@ export class openCarLeftWheelsTool {
      */
     execute(args) {
         // Dispatch the custom event to open the car trunk
-        const event = new CustomEvent('open_l_wheels');
+        const event = new CustomEvent('close-roof');
         document.dispatchEvent(event);
         
-        return "I've opened the car Left Wheels for you.";
+        return "I've closed the car roof for you. Any information you need?";
     }
 }

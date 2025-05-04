@@ -14,8 +14,8 @@ const elements = {
     screenPreview: document.getElementById('screenPreview'),
 
     // Text input elements
-    messageInput: document.getElementById('messageInput'),
-    sendBtn: document.getElementById('sendBtn'),
+    messageInput : null,
+    // sendBtn: document.getElementById('sendBtn'),
 
     // Visualizer canvas
     visualizerCanvas: document.getElementById('visualizer')

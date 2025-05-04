@@ -3,227 +3,192 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
-use Illuminate\Support\Facades\File; // Usar File facade para manejo de directorios/archivos
+use Google\Cloud\Speech\V1\SpeechClient;
+use Google\Cloud\Speech\V1\RecognitionAudio;
+use Google\Cloud\Speech\V1\RecognitionConfig;
+use Google\Cloud\Speech\V1\RecognitionConfig\AudioEncoding;
+use Illuminate\Support\Facades\Log; // Para logs
+use Illuminate\Support\Facades\Validator; // Para validación
 
 class SttController extends Controller
 {
-    /**
-     * Muestra la vista de prueba para subir audio.
-     *
-     * @return \Illuminate\View\View
-     */
+    // Vista de prueba existente
     public function showTestView()
     {
-        return view('stt_test'); // Asegúrate de que exista resources/views/stt_test.blade.php
+        return view('stt-test'); // Asegúrate que esta vista exista en resources/views/
     }
 
-    /**
-     * Procesa el archivo de audio subido, lo pasa a un script Python para transcripción
-     * vía Google Cloud Speech V2 y devuelve el resultado.
-     * Pasa explícitamente la variable de entorno GOOGLE_APPLICATION_CREDENTIALS al proceso hijo.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    // Método existente para la vista de prueba
     public function transcribeAudio(Request $request)
     {
         $request->validate([
-            'audio' => 'required|file|mimetypes:audio/wav,audio/x-wav,audio/mpeg,audio/mp3,audio/ogg,audio/flac|max:20480', // 20MB Max
+            'audio' => 'required|file|mimes:wav,mp3,flac,ogg,webm,aac,m4a', // Amplía los mimes si es necesario
         ]);
 
-        $audioFile = $request->file('audio');
-        $fullPath = null; // Inicializar la variable de ruta
+        try {
+            $audioFile = $request->file('audio');
+            $transcription = $this->recognizeAudio($audioFile->getRealPath(), $audioFile->getMimeType());
+
+            if ($transcription) {
+                return back()->with('transcription', $transcription);
+            } else {
+                return back()->withErrors(['audio' => 'No se pudo reconocer texto en el audio.']);
+            }
+        } catch (\Google\ApiCore\ApiException $e) {
+            Log::error("Google API Exception during STT: " . $e->getMessage());
+            return back()->withErrors(['audio' => 'Error al comunicar con la API de Google Speech: ' . $e->getMessage()]);
+        } catch (\Exception $e) {
+             Log::error("General Exception during STT: " . $e->getMessage());
+            return back()->withErrors(['audio' => 'Ocurrió un error inesperado durante la transcripción: ' . $e->getMessage()]);
+        }
+    }
+
+    // --- NUEVO MÉTODO PARA EL CHAT (AJAX) ---
+    public function transcribeForChat(Request $request)
+    {
+        // Validación específica para la subida desde el chat
+        $validator = Validator::make($request->all(), [
+            // Ajusta los mimes según lo que MediaRecorder pueda generar y Google soporte
+             // webm, ogg (con opus/vorbis), flac, wav, mp3 son buenas opciones
+            'audio' => 'required|file|mimes:webm,ogg,wav,mp3,flac|max:10240', // Max 10MB, ajusta si es necesario
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Archivo inválido: ' . $validator->errors()->first('audio') // Devuelve el primer error de validación
+            ], 400); // Bad Request
+        }
 
         try {
-            // --- 1. Subir archivo a storage/app/audio_temp/ ---
-            $folder = storage_path('app/audio_temp');
-            if (!File::isDirectory($folder)) {
-                File::makeDirectory($folder, 0755, true, true);
-                Log::info("Directorio de audio temporal creado en: " . $folder);
-            } elseif (!is_writable($folder)) {
-                Log::error("El directorio de audio temporal no tiene permisos de escritura: " . $folder);
-                throw new \Exception("Error de configuración del servidor: Permisos incorrectos en el directorio de almacenamiento temporal.");
-            }
+            $audioFile = $request->file('audio');
+            $filePath = $audioFile->getRealPath();
+            $mimeType = $audioFile->getMimeType(); // Obtener el mime type real
 
-            $originalExtension = $audioFile->getClientOriginalExtension();
-            $filename = uniqid('audio_', true) . '.' . $originalExtension;
-            $audioFile->move($folder, $filename);
-            $fullPath = $folder . DIRECTORY_SEPARATOR . $filename;
+            Log::info("STT Request - MimeType: " . $mimeType . ", Size: " . $audioFile->getSize());
 
-            if (!file_exists($fullPath)) {
-                 Log::error('Archivo no encontrado después de moverlo: ' . $fullPath);
-                 $fullPath = null;
-                 return back()->withErrors(['Error interno del servidor al guardar el archivo de audio.']);
-            }
-            Log::info("Archivo de audio subido y guardado temporalmente en: " . $fullPath);
+            $transcription = $this->recognizeAudio($filePath, $mimeType);
 
-            // --- 2. Configurar y Ejecutar el Script de Python ---
-            $pythonExecutable = base_path('py-venv/bin/python'); // AJUSTA si tu venv o ejecutable se llama diferente
-            $scriptPath = base_path('scripts/transcribe_audio.py'); // AJUSTA si tu script está en otro lugar
-            $projectId = config('services.google.project_id');
-
-            // --- Verificaciones de Configuración ---
-            if (!$projectId) {
-                 Log::error('Google Project ID no configurado en config/services.php o .env (services.google.project_id)');
-                 throw new \Exception('Configuración incompleta: Falta el ID del proyecto de Google.');
-            }
-            if (!file_exists($pythonExecutable)) {
-                 Log::error('Ejecutable de Python del venv NO encontrado en: ' . $pythonExecutable);
-                 throw new \Exception('Configuración incorrecta: No se encuentra el ejecutable de Python del entorno virtual.');
-            }
-            if (!file_exists($scriptPath)) {
-                 Log::error('Script de Python NO encontrado en: ' . $scriptPath);
-                 throw new \Exception('Configuración incorrecta: No se encuentra el script de transcripción.');
-            }
-
-            // --- Autenticación de Google Cloud para Python (PASANDO ENV EXPLICITAMENTE) ---
-            $googleCredentialsPath = config('services.google.credentials'); // Lee la ruta desde config/services.php (que a su vez lee .env)
-            $processEnv = []; // Array para las variables de entorno del proceso hijo
-
-            // --- IMPORTANTE: Verificar que 'credentials' esté definido en config/services.php ---
-            // Asegúrate de tener en config/services.php:
-            // 'google' => [
-            //     'project_id' => env('GOOGLE_PROJECT_ID'),
-            //     'credentials' => env('GOOGLE_APPLICATION_CREDENTIALS'), // <-- ¡Esta línea es crucial!
-            // ],
-
-            if ($googleCredentialsPath && file_exists($googleCredentialsPath)) {
-                // Si la ruta está definida en Laravel y el archivo existe,
-                // la añadimos al array de entorno que se pasará al proceso Python.
-                $processEnv['GOOGLE_APPLICATION_CREDENTIALS'] = $googleCredentialsPath;
-                Log::info("Pasando explícitamente GOOGLE_APPLICATION_CREDENTIALS al script Python: " . $googleCredentialsPath);
+            if ($transcription) {
+                 Log::info("STT Success - Transcription: " . $transcription);
+                return response()->json([
+                    'success' => true,
+                    'transcription' => $transcription
+                ]);
             } else {
-                // Si no se encontró la ruta o el archivo, el script Python probablemente intentará usar ADC.
-                // Se loguea una advertencia clara.
-                Log::warning("No se encontró archivo de credenciales en la ruta especificada por GOOGLE_APPLICATION_CREDENTIALS ('" . ($googleCredentialsPath ?: 'No configurada') . "') en .env/config. El script Python intentará usar ADC o fallará si no puede.");
-                // No lanzamos excepción aquí, dejamos que el script Python falle si no puede autenticarse por otros medios (ADC).
+                 Log::warning("STT Failed - No transcription result for file.");
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No se pudo reconocer texto en el audio.'
+                ], 400); // Bad Request o tal vez 200 con success false? Depende de cómo quieras manejarlo
             }
+        } catch (\Google\ApiCore\ApiException $e) {
+            Log::error("Google API Exception during STT (Chat): " . $e->getMessage() . " Code: " . $e->getCode());
+             // Podrías devolver mensajes más específicos según $e->getCode() si es necesario
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al procesar el audio con la API externa.' // Mensaje genérico para el usuario
+            ], 500); // Internal Server Error
+        } catch (\Exception $e) {
+            Log::error("General Exception during STT (Chat): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'error' => 'Ocurrió un error inesperado en el servidor.'
+            ], 500); // Internal Server Error
+        }
+    }
 
 
-            // --- Crear y Ejecutar el Proceso ---
-            Log::info("Ejecutando script Python: {$pythonExecutable} {$scriptPath} '{$fullPath}' --project-id {$projectId}");
-
-            $process = new Process([
-                $pythonExecutable,
-                $scriptPath,
-                $fullPath,
-                '--project-id', $projectId
+    // --- FUNCIÓN HELPER REUTILIZABLE PARA LLAMAR A GOOGLE API ---
+    private function recognizeAudio(string $filePath, ?string $mimeType = null): ?string
+    {
+        // Asegúrate de tener tus credenciales de Google Cloud configuradas
+        // ya sea mediante variable de entorno GOOGLE_APPLICATION_CREDENTIALS
+        // o explícitamente aquí (menos recomendado).
+        try {
+            $speechClient = new SpeechClient([
+                // 'keyFilePath' => '/ruta/a/tu/keyfile.json', // Si no usas variable de entorno
+                // Puedes añadir opciones de cliente aquí si es necesario (ej. endpoint)
             ]);
 
-            // Establecer el entorno para el proceso hijo SI DEFINIMOS VARIABLES
-            // Esto inyecta las variables de $processEnv en el entorno del script Python.
-            if (!empty($processEnv)) {
-                $process->setEnv($processEnv);
+            $audioContent = file_get_contents($filePath);
+
+            // Configuración del reconocimiento
+            $config = new RecognitionConfig();
+            // --- Determinar codificación basada en MimeType ---
+            // Esto es crucial para que Google entienda el archivo
+            $encoding = AudioEncoding::LINEAR16; // Default seguro para WAV
+            $sampleRateHertz = 16000;       // Default común, ajustar si es necesario/posible
+
+             if ($mimeType) {
+                if (str_contains($mimeType, 'webm')) {
+                     // OGG_OPUS es más probable para webm de navegador que WEBM_OPUS
+                    $encoding = AudioEncoding::OGG_OPUS;
+                    // La sample rate suele estar embebida en Opus/Vorbis, pero puedes especificarla si la conoces
+                    // Google recomienda dejarla en 0 para que la detecte automáticamente para Opus/Vorbis/Flac
+                    $sampleRateHertz = 0; // Dejar que Google detecte para OGG_OPUS
+                } elseif (str_contains($mimeType, 'ogg')) {
+                    $encoding = AudioEncoding::OGG_OPUS; // O podría ser OGG_VORBIS
+                     $sampleRateHertz = 0; // Dejar que Google detecte
+                } elseif (str_contains($mimeType, 'flac')) {
+                    $encoding = AudioEncoding::FLAC;
+                     $sampleRateHertz = 0; // Dejar que Google detecte
+                } elseif (str_contains($mimeType, 'mp3')) {
+                    $encoding = AudioEncoding::MP3;
+                     // Para MP3, necesitas especificar la sample rate si no es 16000
+                     // $sampleRateHertz = 44100; // o la que sea
+                     $sampleRateHertz = 0; // Intentar autodetección si es posible
+                } elseif (str_contains($mimeType, 'wav')) {
+                    $encoding = AudioEncoding::LINEAR16; // O MULAW / ALAW si sabes que es eso
+                     // Podrías intentar leer el header WAV para obtener sample rate
+                     // Por ahora, asumimos 16000Hz o dejamos 0 si la API lo permite
+                     $sampleRateHertz = 0; // Intentar autodetección si es posible, si no, poner 16000
+                }
+                // Añadir más casos según sea necesario (aac -> requiere convertir o usar API específica?)
+            } else {
+                 Log::warning("STT: MimeType no disponible, asumiendo LINEAR16/16000Hz.");
+                 // Si no hay mime type, es difícil saber. Podrías intentar adivinar o fallar.
             }
 
-            $process->setTimeout(180); // 3 minutos timeout
-            $process->mustRun(); // Lanza excepción si falla
+            Log::info("STT Config - Encoding: " . AudioEncoding::name($encoding) . ", SampleRate: " . ($sampleRateHertz ?: 'Auto'));
 
-            // --- 3. Obtener la Salida (Transcripción) ---
-            $transcription = trim($process->getOutput());
-            $errorOutput = trim($process->getErrorOutput());
-
-            if (!empty($errorOutput)) {
-                // Loguear stderr incluso si el proceso terminó con éxito (código 0)
-                Log::warning("Salida de error (stderr) del script Python (puede ser sólo un warning): " . $errorOutput);
+            $config->setEncoding($encoding);
+            if ($sampleRateHertz > 0) { // Solo establecer si no es 0 (auto)
+                 $config->setSampleRateHertz($sampleRateHertz);
             }
-            Log::info("Transcripción recibida del script Python para el archivo: " . basename($fullPath));
+            $config->setLanguageCode('es-ES'); // O el idioma que necesites 'en-US', etc.
+            // $config->setEnableAutomaticPunctuation(true); // Opcional: mejora la puntuación
 
-            // --- 4. Devolver la transcripción ---
-            if (empty($transcription) && empty($this->filterPythonWarnings($errorOutput))) {
-                 Log::warning('La transcripción está vacía (posiblemente audio sin habla) para el archivo: ' . basename($fullPath));
-                 return back()->with('transcription', '(Audio sin contenido transcribible o transcripción vacía)');
-            } elseif (empty($transcription) && !empty($errorOutput)) {
-                 // Si no hay transcripción pero sí hubo mensajes en stderr
-                 return back()->with('transcription', '(No se generó transcripción - ver logs para detalles)');
-            }
-            return back()->with('transcription', $transcription);
+            // Crear el objeto de audio
+            $audio = new RecognitionAudio();
+            $audio->setContent($audioContent);
 
-        } catch (ProcessFailedException $exception) {
-            // El script Python falló (exit code != 0)
-            $errorOutput = $exception->getProcess()->getErrorOutput();
-            Log::error('Error al ejecutar el script Python: ' . $exception->getMessage());
-            Log::error('Código de salida del script Python: ' . $exception->getProcess()->getExitCode());
-            Log::error('Salida de error (stderr) del script Python: ' . $errorOutput);
-            return back()->withErrors([
-                'transcription_error' => 'Error durante la transcripción.',
-                'script_error' => 'Detalles del script: ' . $this->cleanErrorMessage($errorOutput)
-            ]);
+            // Realizar la solicitud de reconocimiento
+            $response = $speechClient->recognize($config, $audio);
 
-        } catch (\Throwable $e) { // Captura Exception y Error (PHP 7+)
-            Log::error('Error inesperado en SttController: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->withErrors(['Error interno del servidor: ' . $e->getMessage()]);
-
-        } finally {
-            // --- 5. Limpiar el archivo temporal (SIEMPRE intentar) ---
-            if ($fullPath && file_exists($fullPath)) {
-                Log::info("Eliminando archivo de audio temporal: " . $fullPath);
-                if (!@unlink($fullPath)) {
-                     Log::error("No se pudo eliminar el archivo temporal: " . $fullPath);
+            $transcription = null;
+            // Procesar los resultados
+            foreach ($response->getResults() as $result) {
+                $alternatives = $result->getAlternatives();
+                if (count($alternatives) > 0) {
+                    $transcription = $alternatives[0]->getTranscript(); // Tomar la alternativa más probable
+                    break; // Usualmente solo necesitamos el primer resultado completo
                 }
             }
-        }
-    }
 
-    /**
-     * Limpia los mensajes de error de stderr del script Python para mostrarlos al usuario.
-     *
-     * @param string $errorOutput Salida de stderr del proceso.
-     * @return string Mensaje de error limpiado o un resumen.
-     */
-    private function cleanErrorMessage(string $errorOutput): string
-    {
-        // Reutilizamos la función cleanErrorMessage anterior, pero podríamos filtrarla más si es necesario
-        $errorOutput = trim($errorOutput);
-        if (empty($errorOutput)) {
-            return 'El script no produjo salida de error específica.';
-        }
-        $lines = explode("\n", $errorOutput);
-        $relevantLines = [];
-        foreach ($lines as $line) {
-            $trimmedLine = trim($line);
-            if (empty($trimmedLine)) continue;
-            // Priorizar mensajes de error claros
-            if (preg_match('/^(Error|Exception|Traceback|Fatal|Critical)/i', $trimmedLine)) {
-                $relevantLines[] = $trimmedLine;
-            }
-            // Incluir warnings si no hay errores claros
-            elseif (empty($relevantLines) && preg_match('/^Warning/i', $trimmedLine)) {
-                 $relevantLines[] = $trimmedLine;
-            }
-        }
-        if (!empty($relevantLines)) {
-            $message = implode('; ', $relevantLines);
-            return strlen($message) > 250 ? substr($message, 0, 247) . '...' : $message;
-        }
-        // Si no, devolver las últimas líneas no vacías
-        $lastLines = array_slice(array_filter($lines, 'trim'), -3);
-        $message = implode('; ', array_map('trim', $lastLines));
-        return strlen($message) > 250 ? substr($message, 0, 247) . '...' : $message;
-    }
+            $speechClient->close();
+            return $transcription;
 
-     /**
-     * Filtra warnings comunes de Python que no indican un fallo real.
-     *
-     * @param string $errorOutput
-     * @return string Error output sin los warnings filtrados.
-     */
-     private function filterPythonWarnings(string $errorOutput): string
-     {
-         $lines = explode("\n", $errorOutput);
-         $filteredLines = [];
-         foreach ($lines as $line) {
-             // Ejemplo: Ignorar el warning específico sobre GOOGLE_APPLICATION_CREDENTIALS si estamos intentando ADC
-             if (str_contains($line, "Warning: GOOGLE_APPLICATION_CREDENTIALS environment variable not set")) {
-                 continue; // Ignorar esta línea específica si es sólo un warning y no un error real
-             }
-             // Podrías añadir más filtros aquí para otros warnings conocidos e inofensivos
-             $filteredLines[] = $line;
-         }
-         return trim(implode("\n", $filteredLines));
-     }
+        } catch (\Google\ApiCore\ApiException $e) {
+            Log::error("Google API Exception in recognizeAudio: " . $e->getMessage() . " Code: " . $e->getCode());
+            // Relanzar para que el método llamador la maneje
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error("General Exception in recognizeAudio: " . $e->getMessage());
+             // Relanzar para que el método llamador la maneje
+            throw $e;
+        }
+
+        return null; // Si algo falla o no hay resultados
+    }
 }
