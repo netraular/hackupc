@@ -9,6 +9,8 @@
 *   **Web Application (Use Google Chrome):** [https://hackupc.raular.com/](https://hackupc.raular.com/)
 *   **AR Experience (Mobile):** [https://hackupc.raular.com/ar](https://hackupc.raular.com/ar)
 
+![3D website with an integrated AI chat!](readme/1_3d_website.jpg)
+
 ---
 
 ## 🏁 Inspiration & Context
@@ -102,6 +104,11 @@ This multi-modal (visual + audio) approach simplifies learning and ensures buyer
 > ✅ Successfully integrated multiple complex technologies (Gemini Live, AR, RAG, Laravel).
 > ✅ Created **both AR and 3D web interfaces** for wider device compatibility.
 
+![AR Tavascan!](readme/2_ar.jpg)
+![AR with animations!](readme/3_ar_anim.jpg)
+![Discover all the parts of your car!](readme/4_discover.jpg)
+![Real time images of the guide!](readme/4_real_images.jpg)
+
 ---
 
 ## 🤔 Challenges We Ran Into
@@ -134,6 +141,8 @@ This multi-modal (visual + audio) approach simplifies learning and ensures buyer
 ## 🤝 Acknowledgements
 
 We thank **SEAT** for presenting such an inspiring challenge and **UPCHack2025** for the opportunity to innovate. Huge appreciation for the platforms and communities behind Google Gemini, Laravel, Pinecone, Three.js, n8n, and WebXR.
+
+We also thanks the authors of the [Gemini 2 Live API Demo](https://github.com/ViaAnthroposBenevolentia/gemini-2-live-api-demo) project (MIT License) that made it possible for us to use the Gemini Live voice mode.
 
 ---
 
