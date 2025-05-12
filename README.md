@@ -1,6 +1,15 @@
-# 🚗 Know Your Cupra – UPCHack2025 Project Submission
+# 🚗 Know Your Cupra / TAVASCAN Rush – UPCHack2025 Project Submission
 ### Team Project for SEAT's Challenge at UPCHack2025
-*(Previously referred to as TAVASCAN Rush during development)*
+
+---
+
+**🔗 Project Links:**
+
+*   **Devpost Submission:** [https://devpost.com/software/cupraai](https://devpost.com/software/cupraai)
+*   **Web Application (Use Google Chrome):** [https://hackupc.raular.com/](https://hackupc.raular.com/)
+*   **AR Experience (Mobile):** [https://hackupc.raular.com/ar](https://hackupc.raular.com/ar)
+
+---
 
 ## 🏁 Inspiration & Context
 
